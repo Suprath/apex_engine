@@ -40,9 +40,10 @@ target_include_directories(apex_obj PUBLIC include)
 
 # External Dependencies: Try submodules first, then system packages
 
-# AsmJit - JIT code generation
+# AsmJit - JIT code generation (static library)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/asmjit/CMakeLists.txt")
     message(STATUS "Building AsmJit from submodule")
+    set(ASMJIT_STATIC ON CACHE BOOL "Build AsmJit as static library")
     add_subdirectory(external/asmjit)
     set(asmjit_FOUND TRUE)
 else()
@@ -66,25 +67,29 @@ else()
     endif()
 endif()
 
-# iceoryx - Zero-copy IPC
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/iceoryx/CMakeLists.txt")
-    message(STATUS "Building iceoryx from submodule")
+# iceoryx - Zero-copy IPC (hoofs and posh modules)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/iceoryx/iceoryx_hoofs/CMakeLists.txt")
+    message(STATUS "Building iceoryx (hoofs/posh) from submodule")
     set(IOX_BUILD_TESTS OFF CACHE BOOL "Disable iceoryx tests")
     set(IOX_BUILD_EXAMPLES OFF CACHE BOOL "Disable iceoryx examples")
-    add_subdirectory(external/iceoryx)
-    set(iceoryx_binding_c_FOUND TRUE)
+    add_subdirectory(external/iceoryx/iceoryx_hoofs)
+    add_subdirectory(external/iceoryx/iceoryx_posh)
+    set(iceoryx_FOUND TRUE)
 else()
     find_package(iceoryx_binding_c QUIET)
     if(NOT iceoryx_binding_c_FOUND)
         message(STATUS "iceoryx not found; IPC features will be disabled")
+    else()
+        set(iceoryx_FOUND TRUE)
     endif()
 endif()
 
-# FlatBuffers - Serialization
+# FlatBuffers - Serialization (with flatc compiler)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/flatbuffers/CMakeLists.txt")
     message(STATUS "Building FlatBuffers from submodule")
     set(FLATBUFFERS_BUILD_TESTS OFF CACHE BOOL "Disable FlatBuffers tests")
     set(FLATBUFFERS_BUILD_FLATLIB OFF CACHE BOOL "Disable FlatLib")
+    set(FLATBUFFERS_BUILD_FLATC ON CACHE BOOL "Build flatc compiler")
     add_subdirectory(external/flatbuffers)
     set(flatbuffers_FOUND TRUE)
 else()
@@ -94,6 +99,27 @@ else()
     endif()
 endif()
 
+# Link external libraries to apex_obj (shared compilation unit)
+if(asmjit_FOUND)
+    target_link_libraries(apex_obj PRIVATE asmjit::asmjit)
+    target_compile_definitions(apex_obj PRIVATE APEX_HAS_ASMJIT)
+endif()
+
+if(highway_FOUND)
+    target_link_libraries(apex_obj PRIVATE hwy)
+    target_compile_definitions(apex_obj PRIVATE APEX_HAS_HIGHWAY)
+endif()
+
+if(iceoryx_FOUND)
+    target_link_libraries(apex_obj PRIVATE iceoryx_hoofs iceoryx_posh)
+    target_compile_definitions(apex_obj PRIVATE APEX_HAS_ICEORYX)
+endif()
+
+if(flatbuffers_FOUND)
+    target_link_libraries(apex_obj PRIVATE flatbuffers)
+    target_compile_definitions(apex_obj PRIVATE APEX_HAS_FLATBUFFERS)
+endif()
+
 # SHARED library: apex runtime library
 add_library(apex SHARED
     $<TARGET_OBJECTS:apex_obj>
@@ -101,6 +127,7 @@ add_library(apex SHARED
 target_compile_options(apex PRIVATE ${APEX_COMPILE_FLAGS})
 target_include_directories(apex PUBLIC include)
 
+# Propagate external library links to apex shared library
 if(asmjit_FOUND)
     target_link_libraries(apex PRIVATE asmjit::asmjit)
     target_compile_definitions(apex PRIVATE APEX_HAS_ASMJIT)
@@ -111,8 +138,8 @@ if(highway_FOUND)
     target_compile_definitions(apex PRIVATE APEX_HAS_HIGHWAY)
 endif()
 
-if(iceoryx_binding_c_FOUND)
-    target_link_libraries(apex PRIVATE iceoryx_binding_c::iceoryx_binding_c)
+if(iceoryx_FOUND)
+    target_link_libraries(apex PRIVATE iceoryx_hoofs iceoryx_posh)
     target_compile_definitions(apex PRIVATE APEX_HAS_ICEORYX)
 endif()
 

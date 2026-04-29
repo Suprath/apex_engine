@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  apex-build:
+    build:
+      context: ..
+      dockerfile: .docker/build.Dockerfile
+    image: apex-engine:latest
+    container_name: apex-builder
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace
+      - apex-build-cache:/workspace/build
+      - apex-cmake-cache:/workspace/cmake-build-debug
+    environment:
+      CMAKE_BUILD_PARALLEL_LEVEL: 4
+      NINJA_STATUS: "[%f/%t] "
+      CXXFLAGS: "-O3 -march=native -ffast-math -fno-finite-math-only"
+      CC: clang
+      CXX: clang++
+      LD: lld
+    command: bash
+    stdin_open: true
+    tty: true
+
+volumes:
+  apex-build-cache:
+  apex-cmake-cache:

@@ -1,0 +1,12 @@
+.git
+.gitignore
+.idea
+cmake-build-debug
+cmake-build-release
+build
+*.swp
+*.swo
+*~
+.DS_Store
+.vscode
+.clion

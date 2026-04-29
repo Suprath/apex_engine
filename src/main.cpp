@@ -6,14 +6,17 @@
 #include "apex/core/types.hpp"
 
 #ifdef APEX_HAS_ICEORYX
-#include <iceoryx_binding_c/runtime.h>
+#include "iceoryx_posh/runtime/posh_runtime.hpp"
+#include "apex/memory/shm_fabric.hpp"
+#include "apex/memory/data_viewer.hpp"
+#include "apex/memory/market_tick.hpp"
 #endif
 
 namespace apex {
 
 bool initialize_runtime() {
 #ifdef APEX_HAS_ICEORYX
-    iox_runtime_init("apex_engine");
+    iox::runtime::PoshRuntime::initRuntime("APEX_ENGINE");
     return true;
 #else
     return true;
@@ -22,7 +25,7 @@ bool initialize_runtime() {
 
 void shutdown_runtime() {
 #ifdef APEX_HAS_ICEORYX
-    iox_runtime_shutdown();
+    // PoshRuntime cleanup happens on process exit
 #endif
 }
 

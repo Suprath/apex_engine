@@ -2,5 +2,11 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build/dependencies/cpptoml/src" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/build/dependencies/cpptoml/src/deps/meta-cmake" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/asmjit" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/flatbuffers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/highway" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/external/iceoryx" vcs="Git" />
   </component>
 </project>

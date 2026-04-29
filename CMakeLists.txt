@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.18)
 project(apex_engine VERSION 1.0.0 LANGUAGES CXX)
 
+# Threads - Required by iceoryx for multi-threaded IPC
+find_package(Threads REQUIRED)
+
 # Position Independent Code for shared library
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -80,11 +83,15 @@ else()
     endif()
 endif()
 
-# iceoryx - Zero-copy IPC (hoofs and posh modules)
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/iceoryx/iceoryx_hoofs/CMakeLists.txt")
-    message(STATUS "Building iceoryx (hoofs/posh) from submodule")
+# iceoryx - Zero-copy IPC (platform, hoofs, and posh modules)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/iceoryx/iceoryx_platform/CMakeLists.txt")
+    message(STATUS "Building iceoryx (platform/hoofs/posh) from submodule")
     set(IOX_BUILD_TESTS OFF CACHE BOOL "Disable iceoryx tests")
     set(IOX_BUILD_EXAMPLES OFF CACHE BOOL "Disable iceoryx examples")
+    set(IOX_VERSION_STRING "2.0.0" CACHE STRING "iceoryx version string")
+    # Build platform first (dependency of hoofs)
+    add_subdirectory(external/iceoryx/iceoryx_platform)
+    # Build hoofs and posh (depend on platform)
     add_subdirectory(external/iceoryx/iceoryx_hoofs)
     add_subdirectory(external/iceoryx/iceoryx_posh)
     set(iceoryx_FOUND TRUE)
@@ -133,6 +140,8 @@ if(flatbuffers_FOUND AND EXISTS "${FLATBUFFERS_SCHEMA_DIR}")
 endif()
 
 # Link external libraries to apex_obj (shared compilation unit)
+target_link_libraries(apex_obj PRIVATE Threads::Threads)
+
 if(asmjit_FOUND)
     target_link_libraries(apex_obj PRIVATE asmjit::asmjit)
     target_compile_definitions(apex_obj PRIVATE APEX_HAS_ASMJIT)
@@ -165,6 +174,8 @@ if(flatbuffers_FOUND)
 endif()
 
 # Propagate external library links to apex shared library
+target_link_libraries(apex PRIVATE Threads::Threads)
+
 if(asmjit_FOUND)
     target_link_libraries(apex PRIVATE asmjit::asmjit)
     target_compile_definitions(apex PRIVATE APEX_HAS_ASMJIT)

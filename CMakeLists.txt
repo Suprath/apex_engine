@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.18)
 project(apex_engine VERSION 1.0.0 LANGUAGES CXX)
 
+# Position Independent Code for shared library
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # C++20 standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -12,13 +15,16 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Extreme optimization flags for production
-set(APEX_COMPILE_FLAGS -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra)
+set(APEX_COMPILE_FLAGS_STR "-O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra")
+
+# Release flags (production)
+set(CMAKE_CXX_FLAGS_RELEASE "${APEX_COMPILE_FLAGS_STR}")
 
 # Debug flags with sanitizers
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer")
 
-# Release flags (production)
-set(CMAKE_CXX_FLAGS_RELEASE "${APEX_COMPILE_FLAGS}")
+# Optimization flags list for target_compile_options (must be a semicolon-separated list)
+string(REPLACE " " ";" APEX_COMPILE_FLAGS "${APEX_COMPILE_FLAGS_STR}")
 
 # Include directories
 include_directories(include)
@@ -26,6 +32,7 @@ include_directories(include)
 # Source files for OBJECT library
 set(APEX_SOURCES
     src/core/core.cpp
+    src/core/registry.cpp
     src/memory/memory.cpp
     src/jit/jit.cpp
     src/compute/compute.cpp
@@ -37,6 +44,12 @@ set(APEX_SOURCES
 add_library(apex_obj OBJECT ${APEX_SOURCES})
 target_compile_options(apex_obj PRIVATE ${APEX_COMPILE_FLAGS})
 target_include_directories(apex_obj PUBLIC include)
+
+# Add generated FlatBuffers headers directory
+if(flatbuffers_FOUND)
+    target_include_directories(apex_obj PUBLIC "${FLATBUFFERS_GENERATED_DIR}")
+    add_dependencies(apex_obj apex_flatbuffers_gen)
+endif()
 
 # External Dependencies: Try submodules first, then system packages
 
@@ -99,6 +112,26 @@ else()
     endif()
 endif()
 
+# Generate C++ headers from FlatBuffers schema files
+set(FLATBUFFERS_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/fbs")
+set(FLATBUFFERS_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/flatbuffers")
+
+if(flatbuffers_FOUND AND EXISTS "${FLATBUFFERS_SCHEMA_DIR}")
+    file(MAKE_DIRECTORY "${FLATBUFFERS_GENERATED_DIR}")
+
+    # Generate C++ from market_data.fbs
+    add_custom_command(
+        OUTPUT "${FLATBUFFERS_GENERATED_DIR}/market_data_generated.h"
+        COMMAND flatc -c --gen-onefile -o "${FLATBUFFERS_GENERATED_DIR}" "${FLATBUFFERS_SCHEMA_DIR}/market_data.fbs"
+        DEPENDS "${FLATBUFFERS_SCHEMA_DIR}/market_data.fbs"
+        COMMENT "Generating FlatBuffers C++ headers from market_data.fbs"
+    )
+
+    add_custom_target(apex_flatbuffers_gen ALL
+        DEPENDS "${FLATBUFFERS_GENERATED_DIR}/market_data_generated.h"
+    )
+endif()
+
 # Link external libraries to apex_obj (shared compilation unit)
 if(asmjit_FOUND)
     target_link_libraries(apex_obj PRIVATE asmjit::asmjit)
@@ -116,7 +149,6 @@ if(iceoryx_FOUND)
 endif()
 
 if(flatbuffers_FOUND)
-    target_link_libraries(apex_obj PRIVATE flatbuffers)
     target_compile_definitions(apex_obj PRIVATE APEX_HAS_FLATBUFFERS)
 endif()
 
@@ -126,6 +158,11 @@ add_library(apex SHARED
 )
 target_compile_options(apex PRIVATE ${APEX_COMPILE_FLAGS})
 target_include_directories(apex PUBLIC include)
+
+# Add generated FlatBuffers headers directory
+if(flatbuffers_FOUND)
+    target_include_directories(apex PUBLIC "${FLATBUFFERS_GENERATED_DIR}")
+endif()
 
 # Propagate external library links to apex shared library
 if(asmjit_FOUND)
@@ -144,7 +181,6 @@ if(iceoryx_FOUND)
 endif()
 
 if(flatbuffers_FOUND)
-    target_link_libraries(apex PRIVATE flatbuffers)
     target_compile_definitions(apex PRIVATE APEX_HAS_FLATBUFFERS)
 endif()
 
@@ -152,6 +188,12 @@ endif()
 add_executable(apex_engine src/main.cpp)
 target_compile_options(apex_engine PRIVATE ${APEX_COMPILE_FLAGS})
 target_include_directories(apex_engine PRIVATE include)
+
+# Add generated FlatBuffers headers directory
+if(flatbuffers_FOUND)
+    target_include_directories(apex_engine PRIVATE "${FLATBUFFERS_GENERATED_DIR}")
+endif()
+
 target_link_libraries(apex_engine PRIVATE apex)
 
 # Testing

@@ -1,14 +1,17 @@
 # Unit tests for Apex Engine
 # Test infrastructure and placeholder for test targets
 
-# Find a testing framework (optional)
-# Users can integrate Catch2, Google Test, or other frameworks as needed
+# Registry tests
+add_executable(test_registry test_registry.cpp)
+target_include_directories(test_registry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_link_libraries(test_registry PRIVATE apex)
+target_compile_options(test_registry PRIVATE ${APEX_COMPILE_FLAGS})
 
-# Example test target (uncomment when test files are added):
-# add_executable(test_core test_core.cpp)
-# target_include_directories(test_core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-# target_link_libraries(test_core PRIVATE apex)
-# target_compile_options(test_core PRIVATE ${APEX_COMPILE_FLAGS})
-# add_test(NAME CoreTests COMMAND test_core)
+# Add generated FlatBuffers headers directory if available
+if(flatbuffers_FOUND)
+    target_include_directories(test_registry PRIVATE "${FLATBUFFERS_GENERATED_DIR}")
+endif()
 
-message(STATUS "Tests directory: add test executables and call add_test() as features are implemented")
+add_test(NAME RegistryTests COMMAND test_registry)
+
+message(STATUS "Tests configured: test_registry")

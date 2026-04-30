@@ -3,6 +3,12 @@
 #include <cstdint>
 #include <vector>
 #include <bitset>
+#include <thread>
+#include <atomic>
+#include <chrono>
+#include <iomanip>
+#include <cstdlib>
+#include <pthread.h>
 #include "apex/core/registry.hpp"
 #include "apex/core/types.hpp"
 #include "apex/compute/bit_slicer.hpp"
@@ -264,6 +270,145 @@ int main() {
     if (total_correct == 64) {
         std::cout << "\n🎉 MODULE 4 COMPLETE: JIT Comparison Kernel Verified (64/64)!\n";
     }
+
+    // ============================================================================
+    // MODULE 5: HIGH-THROUGHPUT ORCHESTRATOR - 128M Row Parallel Processing
+    // ============================================================================
+    std::cout << "\n\n=== Module 5: High-Throughput Orchestrator ===\n";
+    std::cout << "Generating 128M rows (1 GB) of mock price data...\n";
+
+    // Step 1: Allocate 128M uint64_t prices, 16KB aligned for macOS page boundary
+    constexpr size_t kNumRows = 128'000'000;
+    constexpr size_t kAlignBytes = 16 * 1024;  // macOS page size
+    constexpr size_t kNumChunks = kNumRows / 64;
+    constexpr int kNumThreads = 4;
+
+    void* raw = nullptr;
+    if (posix_memalign(&raw, kAlignBytes, kNumRows * sizeof(uint64_t)) != 0) {
+        std::cerr << "✗ Failed to allocate 16KB-aligned memory\n";
+        apex::shutdown_runtime();
+        return 1;
+    }
+    uint64_t* m5_prices = static_cast<uint64_t*>(raw);
+
+    // Fill with xorshift64 — zero-heap, branchless RNG
+    {
+        uint64_t seed = 0xDEADBEEFCAFEBABEULL;
+        for (size_t i = 0; i < kNumRows; i++) {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            m5_prices[i] = 10000 + (seed % 50000);
+        }
+        std::cout << "✓ Generated " << kNumRows << " prices (" << (kNumRows * 8 / (1024*1024)) << " MB)\n";
+    }
+
+    // Step 2: Compile JIT kernel on main thread (thread-safe to call from workers)
+    std::cout << "Compiling JIT kernel for threshold=25000...\n";
+    apex::jit::JitCompiler m5_compiler;
+    auto m5_kernel = m5_compiler.compile_comparison(25000);
+    if (!m5_kernel) {
+        std::cerr << "✗ Failed to compile Module 5 kernel\n";
+        free(raw);
+        apex::shutdown_runtime();
+        return 1;
+    }
+
+    // Warm up HWY_DYNAMIC_DISPATCH ISA detection on main thread
+    {
+        apex::compute::BitSlicer warmup_slicer;
+        apex::compute::ColumnBuffer warmup_in{}, warmup_out{};
+        warmup_slicer.slice(warmup_in, warmup_out);
+    }
+    std::cout << "✓ JIT compiled, ISA warmup complete\n";
+
+    // Step 3: Parallel runner with work-stealing
+    std::cout << "Starting " << kNumThreads << " worker threads...\n";
+    std::atomic<uint64_t> chunk_counter{0};
+    std::atomic<uint64_t> total_matches{0};
+
+    auto worker = [&](int) {
+        // Thread-local workspaces — cache-line aligned, no false sharing
+        thread_local apex::compute::ColumnBuffer tls_in;
+        thread_local apex::compute::ColumnBuffer tls_out;
+        thread_local apex::compute::BitSlicer tls_slicer;
+
+        // Request P-Core scheduling on macOS
+#ifdef __APPLE__
+        pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+#endif
+
+        uint64_t local_matches = 0;
+
+        while (true) {
+            // Work-stealing: fetch next available chunk
+            uint64_t chunk = chunk_counter.fetch_add(1, std::memory_order_relaxed);
+            if (chunk >= kNumChunks) break;
+
+            const uint64_t* chunk_ptr = m5_prices + chunk * 64;
+
+            // Prefetch next chunk into L1 (4 cache-line prefetches)
+            const uint64_t* next_ptr = chunk_ptr + 64;
+            if (chunk + 1 < kNumChunks) {
+                __builtin_prefetch(next_ptr,      0, 3);
+                __builtin_prefetch(next_ptr + 8,  0, 3);
+                __builtin_prefetch(next_ptr + 16, 0, 3);
+                __builtin_prefetch(next_ptr + 24, 0, 3);
+            }
+
+            // Load chunk into TLS input buffer
+            std::memcpy(tls_in.data, chunk_ptr, 64 * sizeof(uint64_t));
+
+            // Stage 1: BitSlicer transpose (64x64 via Highway SIMD)
+            tls_slicer.slice(tls_in, tls_out);
+
+            // Stage 2: JIT comparison kernel (ARM64 unrolled)
+            uint64_t mask = m5_kernel(tls_out.data);
+
+            // Count matches with hardware POPCNT
+            local_matches += static_cast<uint64_t>(__builtin_popcountll(mask));
+        }
+
+        // Merge local results with single relaxed atomic (minimal coherency cost)
+        total_matches.fetch_add(local_matches, std::memory_order_relaxed);
+    };
+
+    // Step 4: Timing + Launch + Report
+    auto t_start = std::chrono::high_resolution_clock::now();
+
+    std::vector<std::thread> threads;
+    for (int t = 0; t < kNumThreads; t++) {
+        threads.emplace_back(worker, t);
+    }
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    auto t_end = std::chrono::high_resolution_clock::now();
+    double elapsed_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
+    double elapsed_s = elapsed_ms / 1000.0;
+    double tps = kNumRows / elapsed_s;
+    double ticks_per_us = tps / 1'000'000.0;
+
+    std::cout << "\n=== MODULE 5: High-Throughput Orchestrator Results ===\n\n";
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << "  Total Rows Processed : " << kNumRows << "\n";
+    std::cout << "  Elapsed Time (ms)    : " << elapsed_ms << "\n";
+    std::cout << "  TPS                  : " << std::fixed << std::setprecision(0)
+              << tps << "\n";
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << "  Ticks/Microsecond    : " << ticks_per_us << "\n";
+    std::cout << "  Total Matches (>25k) : " << total_matches.load() << "\n";
+
+    if (tps >= 2'000'000'000.0) {
+        std::cout << "\n🚀 TARGET ACHIEVED: > 2.0 Billion TPS!\n";
+        std::cout << "   Architecture is production-ready for the Indian Market.\n";
+    } else {
+        std::cout << "\n📊 Performance: " << std::fixed << std::setprecision(1)
+                  << (tps / 1'000'000'000.0) << " Billion TPS\n";
+    }
+
+    std::free(raw);
 
     apex::shutdown_runtime();
     return 0;

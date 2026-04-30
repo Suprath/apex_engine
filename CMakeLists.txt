@@ -39,6 +39,7 @@ set(APEX_SOURCES
     src/memory/memory.cpp
     src/jit/jit.cpp
     src/compute/compute.cpp
+    src/compute/bit_slicer.cpp
     src/api/api.cpp
     src/telemetry/telemetry.cpp
 )

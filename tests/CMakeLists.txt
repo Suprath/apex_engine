@@ -14,6 +14,18 @@ endif()
 
 add_test(NAME RegistryTests COMMAND test_registry)
 
+# Bit-Slicer transpose audit tests
+add_executable(test_bit_slicer_transpose test_bit_slicer_transpose.cpp)
+target_include_directories(test_bit_slicer_transpose PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_link_libraries(test_bit_slicer_transpose PRIVATE apex)
+target_compile_options(test_bit_slicer_transpose PRIVATE ${APEX_COMPILE_FLAGS})
+
+if(highway_FOUND)
+    target_compile_definitions(test_bit_slicer_transpose PRIVATE APEX_HAS_HIGHWAY)
+endif()
+
+add_test(NAME BitSlicerTransposeTests COMMAND test_bit_slicer_transpose)
+
 # Memory fabric tests (requires iceoryx)
 if(iceoryx_FOUND)
     add_executable(test_memory_fabric test_memory_fabric.cpp)

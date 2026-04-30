@@ -38,6 +38,8 @@ set(APEX_SOURCES
     src/core/registry.cpp
     src/memory/memory.cpp
     src/jit/jit.cpp
+    src/jit/circuit_library.cpp
+    src/jit/compiler.cpp
     src/compute/compute.cpp
     src/compute/bit_slicer.cpp
     src/api/api.cpp
@@ -200,6 +202,10 @@ endif()
 add_executable(apex_engine src/main.cpp)
 target_compile_options(apex_engine PRIVATE ${APEX_COMPILE_FLAGS})
 target_include_directories(apex_engine PRIVATE include)
+
+if(asmjit_FOUND)
+    target_include_directories(apex_engine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/external/asmjit)
+endif()
 
 # Add generated FlatBuffers headers directory
 if(flatbuffers_FOUND)

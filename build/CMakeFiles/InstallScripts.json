@@ -1,0 +1,16 @@
+{
+	"InstallScripts" : 
+	[
+		"/workspace/build/cmake_install.cmake",
+		"/workspace/build/external/asmjit/cmake_install.cmake",
+		"/workspace/build/external/highway/cmake_install.cmake",
+		"/workspace/build/external/iceoryx/iceoryx_platform/cmake_install.cmake",
+		"/workspace/build/external/iceoryx/iceoryx_hoofs/cmake_install.cmake",
+		"/workspace/build/external/iceoryx/iceoryx_posh/cmake_install.cmake",
+		"/workspace/build/dependencies/posh/cpptoml/prebuild/cmake_install.cmake",
+		"/workspace/build/external/flatbuffers/cmake_install.cmake",
+		"/workspace/build/tests/cmake_install.cmake",
+		"/workspace/build/benchmarks/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

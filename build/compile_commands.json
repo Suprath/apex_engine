@@ -1,0 +1,224 @@
+[
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/file_manager.cpp.o -c /workspace/external/flatbuffers/src/file_manager.cpp",
+  "file": "/workspace/external/flatbuffers/src/file_manager.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/file_manager.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/file_name_manager.cpp.o -c /workspace/external/flatbuffers/src/file_name_manager.cpp",
+  "file": "/workspace/external/flatbuffers/src/file_name_manager.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/file_name_manager.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_parser.cpp.o -c /workspace/external/flatbuffers/src/idl_parser.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_parser.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_parser.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_text.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_text.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_text.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_text.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/reflection.cpp.o -c /workspace/external/flatbuffers/src/reflection.cpp",
+  "file": "/workspace/external/flatbuffers/src/reflection.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/reflection.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/util.cpp.o -c /workspace/external/flatbuffers/src/util.cpp",
+  "file": "/workspace/external/flatbuffers/src/util.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/util.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_binary.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_binary.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_binary.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_binary.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_cpp.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_cpp.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_cpp.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_cpp.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_csharp.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_csharp.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_csharp.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_csharp.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_dart.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_dart.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_dart.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_dart.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_kotlin.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_kotlin.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_kotlin.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_kotlin.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_kotlin_kmp.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_kotlin_kmp.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_kotlin_kmp.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_kotlin_kmp.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_go.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_go.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_go.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_go.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_java.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_java.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_java.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_java.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_ts.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_ts.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_ts.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_ts.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_php.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_php.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_php.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_php.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_python.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_python.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_python.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_python.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_lobster.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_lobster.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_lobster.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_lobster.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_rust.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_rust.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_rust.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_rust.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_fbs.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_fbs.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_fbs.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_fbs.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_grpc.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_grpc.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_grpc.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_grpc.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_json_schema.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_json_schema.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_json_schema.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_json_schema.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_swift.cpp.o -c /workspace/external/flatbuffers/src/idl_gen_swift.cpp",
+  "file": "/workspace/external/flatbuffers/src/idl_gen_swift.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/idl_gen_swift.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/flatc.cpp.o -c /workspace/external/flatbuffers/src/flatc.cpp",
+  "file": "/workspace/external/flatbuffers/src/flatc.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/flatc.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/flatc_main.cpp.o -c /workspace/external/flatbuffers/src/flatc_main.cpp",
+  "file": "/workspace/external/flatbuffers/src/flatc_main.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/flatc_main.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/include/codegen/python.cc.o -c /workspace/external/flatbuffers/include/codegen/python.cc",
+  "file": "/workspace/external/flatbuffers/include/codegen/python.cc",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/include/codegen/python.cc.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/binary_annotator.cpp.o -c /workspace/external/flatbuffers/src/binary_annotator.cpp",
+  "file": "/workspace/external/flatbuffers/src/binary_annotator.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/binary_annotator.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/annotated_binary_text_gen.cpp.o -c /workspace/external/flatbuffers/src/annotated_binary_text_gen.cpp",
+  "file": "/workspace/external/flatbuffers/src/annotated_binary_text_gen.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/annotated_binary_text_gen.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/bfbs_gen_lua.cpp.o -c /workspace/external/flatbuffers/src/bfbs_gen_lua.cpp",
+  "file": "/workspace/external/flatbuffers/src/bfbs_gen_lua.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/bfbs_gen_lua.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/bfbs_gen_nim.cpp.o -c /workspace/external/flatbuffers/src/bfbs_gen_nim.cpp",
+  "file": "/workspace/external/flatbuffers/src/bfbs_gen_nim.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/bfbs_gen_nim.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/src/code_generators.cpp.o -c /workspace/external/flatbuffers/src/code_generators.cpp",
+  "file": "/workspace/external/flatbuffers/src/code_generators.cpp",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/src/code_generators.cpp.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/cpp_generator.cc.o -c /workspace/external/flatbuffers/grpc/src/compiler/cpp_generator.cc",
+  "file": "/workspace/external/flatbuffers/grpc/src/compiler/cpp_generator.cc",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/cpp_generator.cc.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/go_generator.cc.o -c /workspace/external/flatbuffers/grpc/src/compiler/go_generator.cc",
+  "file": "/workspace/external/flatbuffers/grpc/src/compiler/go_generator.cc",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/go_generator.cc.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/java_generator.cc.o -c /workspace/external/flatbuffers/grpc/src/compiler/java_generator.cc",
+  "file": "/workspace/external/flatbuffers/grpc/src/compiler/java_generator.cc",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/java_generator.cc.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/python_generator.cc.o -c /workspace/external/flatbuffers/grpc/src/compiler/python_generator.cc",
+  "file": "/workspace/external/flatbuffers/grpc/src/compiler/python_generator.cc",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/python_generator.cc.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/swift_generator.cc.o -c /workspace/external/flatbuffers/grpc/src/compiler/swift_generator.cc",
+  "file": "/workspace/external/flatbuffers/grpc/src/compiler/swift_generator.cc",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/swift_generator.cc.o"
+},
+{
+  "directory": "/workspace/build",
+  "command": "/usr/bin/clang++ -DFLATBUFFERS_LOCALE_INDEPENDENT=1 -I/workspace/include -I/workspace/external/flatbuffers/include -I/workspace/external/flatbuffers/grpc -O3 -march=native -ffast-math -fno-finite-math-only -O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra -std=c++20 -fPIE -Wall -pedantic -Wextra -Wno-unused-parameter -Wold-style-cast -fsigned-char -Wnon-virtual-dtor -Wnewline-eof -Wno-unknown-warning-option -Wmissing-declarations -Wzero-as-null-pointer-constant -Wimplicit-fallthrough -Wextra-semi -o external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/ts_generator.cc.o -c /workspace/external/flatbuffers/grpc/src/compiler/ts_generator.cc",
+  "file": "/workspace/external/flatbuffers/grpc/src/compiler/ts_generator.cc",
+  "output": "/workspace/build/external/flatbuffers/CMakeFiles/flatc.dir/grpc/src/compiler/ts_generator.cc.o"
+}
+]

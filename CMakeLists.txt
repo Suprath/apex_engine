@@ -43,6 +43,7 @@ set(APEX_SOURCES
     src/compute/compute.cpp
     src/compute/bit_slicer.cpp
     src/api/api.cpp
+    src/api/engine.cpp
     src/telemetry/telemetry.cpp
 )
 
@@ -148,6 +149,9 @@ target_link_libraries(apex_obj PRIVATE Threads::Threads)
 if(asmjit_FOUND)
     target_link_libraries(apex_obj PRIVATE asmjit::asmjit)
     target_compile_definitions(apex_obj PRIVATE APEX_HAS_ASMJIT)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/asmjit")
+        target_include_directories(apex_obj PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/external/asmjit")
+    endif()
 endif()
 
 if(highway_FOUND)

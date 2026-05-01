@@ -1,5 +1,7 @@
 #pragma once
 
+#include "apex/engine.hpp"
+
 namespace apex {
 
 // Version info

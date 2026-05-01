@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/CMakeFiles/ext_cpptoml"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/CMakeFiles/ext_cpptoml.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/CMakeFiles/ext_cpptoml-complete.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/ext_cpptoml-prefix/src/ext_cpptoml-stamp/ext_cpptoml-build.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/ext_cpptoml-prefix/src/ext_cpptoml-stamp/ext_cpptoml-configure.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/ext_cpptoml-prefix/src/ext_cpptoml-stamp/ext_cpptoml-download.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/ext_cpptoml-prefix/src/ext_cpptoml-stamp/ext_cpptoml-install.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/ext_cpptoml-prefix/src/ext_cpptoml-stamp/ext_cpptoml-mkdir.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/ext_cpptoml-prefix/src/ext_cpptoml-stamp/ext_cpptoml-patch.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/ext_cpptoml-prefix/src/ext_cpptoml-stamp/ext_cpptoml-test.rule"
+		},
+		{
+			"file" : "/workspace/build/dependencies/cpptoml/download/ext_cpptoml-prefix/src/ext_cpptoml-stamp/ext_cpptoml-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"ext_cpptoml"
+		],
+		"name" : "ext_cpptoml"
+	}
+}

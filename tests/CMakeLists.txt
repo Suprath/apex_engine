@@ -26,6 +26,25 @@ endif()
 
 add_test(NAME BitSlicerTransposeTests COMMAND test_bit_slicer_transpose)
 
+# SDK IoT sensor test
+add_executable(test_sdk_iot test_sdk_iot.cpp)
+target_include_directories(test_sdk_iot PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_link_libraries(test_sdk_iot PRIVATE apex)
+target_compile_options(test_sdk_iot PRIVATE ${APEX_COMPILE_FLAGS})
+
+if(asmjit_FOUND)
+    target_compile_definitions(test_sdk_iot PRIVATE APEX_HAS_ASMJIT)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
+        target_include_directories(test_sdk_iot PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
+    endif()
+endif()
+
+if(highway_FOUND)
+    target_compile_definitions(test_sdk_iot PRIVATE APEX_HAS_HIGHWAY)
+endif()
+
+add_test(NAME SDKIoTTests COMMAND test_sdk_iot)
+
 # Memory fabric tests (requires iceoryx)
 if(iceoryx_FOUND)
     add_executable(test_memory_fabric test_memory_fabric.cpp)

@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/workspace/build/dependencies/cpptoml/download/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

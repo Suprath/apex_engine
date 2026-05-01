@@ -35,5 +35,23 @@ void CircuitLibrary::emit_gt_64(
     a.bic(eq_mask, eq_mask, temp);
 }
 
+void CircuitLibrary::emit_mux(
+    asmjit::a64::Assembler& a,
+    const asmjit::a64::Gp& cond,
+    const asmjit::a64::Gp& a_mask,
+    const asmjit::a64::Gp& b_mask,
+    asmjit::a64::Gp& out,
+    const asmjit::a64::Gp& tmp) noexcept {
+    using namespace asmjit::a64;
+
+    // MUX: out = (cond & a_mask) | (~cond & b_mask)
+    // tmp1 = cond & a_mask
+    a.and_(tmp, cond, a_mask);
+    // tmp2 = ~cond & b_mask = BIC(b_mask, cond)
+    a.bic(out, b_mask, cond);
+    // result = tmp | tmp2
+    a.orr(out, tmp, out);
+}
+
 } // namespace jit
 } // namespace apex

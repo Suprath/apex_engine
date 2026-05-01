@@ -45,6 +45,25 @@ endif()
 
 add_test(NAME SDKIoTTests COMMAND test_sdk_iot)
 
+# Universal Expression Engine test
+add_executable(test_universal_logic test_universal_logic.cpp)
+target_include_directories(test_universal_logic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_link_libraries(test_universal_logic PRIVATE apex)
+target_compile_options(test_universal_logic PRIVATE ${APEX_COMPILE_FLAGS})
+
+if(asmjit_FOUND)
+    target_compile_definitions(test_universal_logic PRIVATE APEX_HAS_ASMJIT)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
+        target_include_directories(test_universal_logic PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
+    endif()
+endif()
+
+if(highway_FOUND)
+    target_compile_definitions(test_universal_logic PRIVATE APEX_HAS_HIGHWAY)
+endif()
+
+add_test(NAME UniversalLogicTests COMMAND test_universal_logic)
+
 # Memory fabric tests (requires iceoryx)
 if(iceoryx_FOUND)
     add_executable(test_memory_fabric test_memory_fabric.cpp)

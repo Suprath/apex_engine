@@ -1,6 +1,7 @@
 #include "apex/engine.hpp"
 #include <algorithm>
 #include <cstring>
+#include <functional>
 
 namespace apex {
 
@@ -24,6 +25,47 @@ void ApexEngine::set_logic(std::string_view schema_name,
 
     std::string logic_key = std::string(schema_name) + ":" + std::string(field_name);
     compiled_logic_[logic_key] = {field, kernel};
+}
+
+void ApexEngine::set_expression(std::string_view schema_name, ir::Node* expr_root) noexcept {
+    if (!expr_root) return;
+
+    auto kernel = compiler_.compile_expression(expr_root, registry_, schema_name);
+    if (!kernel) return;
+
+    // Collect referenced fields from the expression tree
+    std::vector<const core::FieldDescriptor*> fields;
+    std::unordered_map<int, bool> field_indices_seen;
+
+    std::function<void(ir::Node*)> collect_fields = [&](ir::Node* node) {
+        if (!node) return;
+        if (node->kind == ir::NodeKind::LOAD) {
+            int idx = node->field_idx;
+            if (idx >= 0 && field_indices_seen.find(idx) == field_indices_seen.end()) {
+                const auto* field = registry_.get_field(schema_name, std::string_view(node->field_name));
+                if (field) {
+                    fields.push_back(field);
+                    field_indices_seen[idx] = true;
+                }
+            }
+        }
+        collect_fields(node->left);
+        collect_fields(node->right);
+        if (node->kind == ir::NodeKind::SELECT) {
+            collect_fields(node->cond);
+        }
+    };
+
+    collect_fields(expr_root);
+
+    // Sort fields by their assigned indices
+    std::sort(fields.begin(), fields.end(), [](const core::FieldDescriptor* a, const core::FieldDescriptor* b) {
+        // We rely on the field assignment order from compile_expression
+        return false; // Keep insertion order for now
+    });
+
+    std::string expr_key = std::string(schema_name);
+    expr_logic_[expr_key] = {kernel, fields};
 }
 
 void ApexEngine::gather_field(const void* data_ptr,
@@ -58,8 +100,61 @@ uint64_t ApexEngine::process_chunk(const uint64_t* gathered_values,
     return result_mask;
 }
 
+uint64_t ApexEngine::process_chunk_expr(
+    const void* data_ptr,
+    size_t row_stride,
+    size_t row_count,
+    const ExprCompiledLogic& expr_logic) noexcept {
+    // Gather all referenced fields
+    std::vector<const uint64_t*> field_planes;
+
+    for (size_t i = 0; i < expr_logic.fields.size() && i < 8; ++i) {
+        gather_field(data_ptr, expr_logic.fields[i], row_stride, row_count, field_buffers_[i]);
+        slicer_.slice(field_buffers_[i], field_buffers_[i]);
+        field_planes.push_back(field_buffers_[i].data);
+    }
+
+    // Thread-local scratchpad (4KB)
+    struct ScratchpadBuffer {
+        alignas(64) uint64_t data[8 * 64];
+    };
+    static thread_local ScratchpadBuffer scratchpad_buffer;
+
+    // Call the JIT kernel
+    uint64_t result_mask = expr_logic.kernel(field_planes.data(), scratchpad_buffer.data);
+
+    return result_mask;
+}
+
 uint64_t ApexEngine::execute(const void* data_ptr, size_t row_count) noexcept {
-    // Find the active logic (assumes single logic per engine instance)
+    // Check for expression-based logic first
+    if (!expr_logic_.empty()) {
+        auto meta_it = expr_logic_.begin();
+        if (meta_it != expr_logic_.end()) {
+            const std::string& schema_name = meta_it->first;
+            const ExprCompiledLogic& expr_logic = meta_it->second;
+
+            auto schema_it = schema_metadata_.find(schema_name);
+            if (schema_it == schema_metadata_.end()) return 0;
+
+            size_t row_stride = schema_it->second.row_stride;
+            uint64_t total_matches = 0;
+            const uint8_t* base = static_cast<const uint8_t*>(data_ptr);
+
+            // Process in 64-row chunks
+            for (size_t chunk = 0; chunk * 64 < row_count; chunk++) {
+                const void* chunk_ptr = base + chunk * 64 * row_stride;
+                size_t rows_in_chunk = std::min(size_t(64), row_count - chunk * 64);
+
+                uint64_t chunk_mask = process_chunk_expr(chunk_ptr, row_stride, rows_in_chunk, expr_logic);
+                total_matches += static_cast<uint64_t>(__builtin_popcountll(chunk_mask));
+            }
+
+            return total_matches;
+        }
+    }
+
+    // Fall back to legacy single-field logic
     if (compiled_logic_.empty()) return 0;
 
     const auto& [logic_key, logic] = *compiled_logic_.begin();

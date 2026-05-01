@@ -1,4 +1,0 @@
-/workspace/build/dependencies/install/include/cpptoml.h
-/workspace/build/dependencies/install/lib/cmake/cpptoml/cpptomlTargets.cmake
-/workspace/build/dependencies/install/lib/cmake/cpptoml/cpptomlConfigVersion.cmake
-/workspace/build/dependencies/install/lib/cmake/cpptoml/cpptomlConfig.cmake

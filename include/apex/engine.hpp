@@ -5,11 +5,14 @@
 #include "apex/compute/bit_slicer.hpp"
 #include "apex/compute/column_buffer.hpp"
 #include "apex/jit/compiler.hpp"
+#include "apex/jit/ir.hpp"
 #include <string>
 #include <string_view>
 #include <memory>
 #include <cstring>
 #include <unordered_map>
+#include <array>
+#include <vector>
 
 namespace apex {
 
@@ -26,6 +29,9 @@ public:
                    std::string_view field_name,
                    uint64_t threshold) noexcept;
 
+    // Expression-based API
+    void set_expression(std::string_view schema_name, ir::Node* expr_root) noexcept;
+
     uint64_t execute(const void* data_ptr, size_t row_count) noexcept;
 
 private:
@@ -39,11 +45,20 @@ private:
         jit::KernelFunc kernel;
     };
 
+    struct ExprCompiledLogic {
+        jit::ExprKernelFunc kernel;
+        std::vector<const core::FieldDescriptor*> fields;  // indexed by field_idx
+    };
+
     core::SchemaRegistry registry_;
     jit::JitCompiler compiler_;
     compute::BitSlicer slicer_;
     std::unordered_map<std::string, SchemaMetadata> schema_metadata_;
     std::unordered_map<std::string, CompiledLogic> compiled_logic_;
+    std::unordered_map<std::string, ExprCompiledLogic> expr_logic_;
+
+    // Pre-allocated column buffers for multi-field gather (up to 8 fields)
+    std::array<compute::ColumnBuffer, 8> field_buffers_;
 
     void gather_field(const void* data_ptr,
                      const core::FieldDescriptor* field,
@@ -53,6 +68,12 @@ private:
 
     uint64_t process_chunk(const uint64_t* gathered_values,
                           const CompiledLogic& logic) noexcept;
+
+    uint64_t process_chunk_expr(
+        const void* data_ptr,
+        size_t row_stride,
+        size_t row_count,
+        const ExprCompiledLogic& expr_logic) noexcept;
 };
 
 } // namespace apex

@@ -71,10 +71,10 @@ static void emit_mov_imm64(asmjit::a64::Assembler& a,
                            const asmjit::a64::Gp& dst,
                            uint64_t imm) noexcept {
     using namespace asmjit;
-    a.movz(dst, Imm(imm & 0xFFFF), Imm(0));
-    a.movk(dst, Imm((imm >> 16) & 0xFFFF), Imm(16));
-    a.movk(dst, Imm((imm >> 32) & 0xFFFF), Imm(32));
-    a.movk(dst, Imm((imm >> 48) & 0xFFFF), Imm(48));
+    a.movz(dst, imm & 0xFFFF, 0);
+    a.movk(dst, (imm >> 16) & 0xFFFF, 16);
+    a.movk(dst, (imm >> 32) & 0xFFFF, 32);
+    a.movk(dst, (imm >> 48) & 0xFFFF, 48);
 }
 
 KernelFunc JitCompiler::compile_comparison(uint64_t threshold) noexcept {
@@ -272,7 +272,8 @@ ExprKernelFunc JitCompiler::compile_expression(
     for (auto* load_node : analyzer.load_nodes) {
         std::string field_name(load_node->field_name);
         if (field_to_idx.find(field_name) == field_to_idx.end()) {
-            field_to_idx[field_name] = field_to_idx.size();
+            if (field_to_idx.size() >= 8) return nullptr;
+            field_to_idx[field_name] = static_cast<int>(field_to_idx.size());
         }
         load_node->field_idx = field_to_idx[field_name];
     }
@@ -288,13 +289,20 @@ ExprKernelFunc JitCompiler::compile_expression(
     ScratchpadManager scratch_mgr;
     for (auto* arith_node : analyzer.arithmetic_nodes) {
         arith_node->slot_id = scratch_mgr.alloc_slot();
+        if (arith_node->slot_id < 0) {
+            // Too many intermediate arithmetic results for scratchpad
+            return nullptr;
+        }
     }
 
     // Assign carry registers to ADD/SUB nodes (x21-x28)
     int carry_reg_idx = 0;
     for (auto* arith_node : analyzer.arithmetic_nodes) {
-        if ((arith_node->kind == ir::NodeKind::ADD || arith_node->kind == ir::NodeKind::SUB)
-            && carry_reg_idx < 8) {
+        if (arith_node->kind == ir::NodeKind::ADD || arith_node->kind == ir::NodeKind::SUB) {
+            if (carry_reg_idx >= 8) {
+                // Too many carry-over operations
+                return nullptr;
+            }
             arith_node->carry_reg = carry_reg_idx++;
         }
     }
@@ -319,10 +327,11 @@ ExprKernelFunc JitCompiler::compile_expression(
     Gp plane_a = x2;
     Gp plane_b = x3;
     Gp temp_ptr = x4;           // Temporary for field pointer loads
-    Gp result = x5;
+    Gp result = x5;             // Arithmetic result
     Gp scratch1 = x6;           // Scratch register 1
-    Gp scratch2 = x13;          // Scratch register 2
-    Gp scratch3 = x14;          // Scratch register 3
+    Gp scratch2 = x7;           // Scratch register 2
+    Gp scratch3 = x14;          // Scratch register 3 (Offset calculation)
+    // x15 is used as bit_index
 
     // ===== Standard ARM64 Procedure Call Frame =====
     a.stp(x29, x30, Mem(sp, -16).pre());
@@ -452,11 +461,10 @@ ExprKernelFunc JitCompiler::compile_expression(
     };
     collect_comparisons(root);
 
-    // Allocate registers for comparison state (avoiding register collisions)
-    // Use registers that are not used anywhere else: x7, x10, x16 (3 comparisons max)
-    // Each comparison uses 2 registers (GT, EQ), so max 6 registers needed for 3 comparisons
-    std::vector<Gp> cmp_gt_regs = {x7, x10, x16};
-    std::vector<Gp> cmp_eq_regs = {x12, x17, x25};  // x12 is used for temp values in init, x17 and x25 are safe
+    // Allocate registers for comparison state (avoiding IP0/IP1 x16/x17)
+    // Safe scratch: x8, x9, x10, x11, x12, x13
+    std::vector<Gp> cmp_gt_regs = {x8, x10, x12};
+    std::vector<Gp> cmp_eq_regs = {x9, x11, x13}; 
 
     // Initialize GT and EQ masks for each comparison
     int num_comparisons = static_cast<int>(comparison_nodes.size());

@@ -15,9 +15,9 @@ void CircuitLibrary::emit_gt_64(
     // GT = GT | (EQ & A_bit & ~B_bit)
     // EQ = EQ & ~(A_bit ^ B_bit)
 
-    // Use x8 and x9 as scratch registers (ARM64 ABI: not caller-saved)
-    Gp temp = x8;
-    Gp eq_and_temp = x9;
+    // Use x6 and x7 as scratch registers (free in Phase 2)
+    Gp temp = x6;
+    Gp eq_and_temp = x7;
 
     // temp = A_bit & ~B_bit (using BIC: Bit Clear)
     a.bic(temp, a_bit, b_bit);

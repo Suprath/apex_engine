@@ -22,7 +22,11 @@ RUN apt-get update && apt-get install -y \
     libacl1-dev \
     libncurses5-dev \
     python3.10-dev \
+    libpython3.10-dev \
     python3-dev \
+    python3-pip \
+    python3-numpy \
+    python3-setuptools \
     openjdk-11-jdk \
     && ln -sf /usr/bin/clang-15 /usr/bin/clang \
     && ln -sf /usr/bin/clang++-15 /usr/bin/clang++

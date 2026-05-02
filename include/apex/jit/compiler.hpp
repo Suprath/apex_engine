@@ -5,6 +5,8 @@
 #include <memory>
 #include <string_view>
 
+#include "apex/common.hpp"
+
 namespace apex {
 namespace ir {
     struct Node;
@@ -18,7 +20,7 @@ namespace jit {
 using KernelFunc = uint64_t (*)(const uint64_t* bit_planes);
 using ExprKernelFunc = uint64_t (*)(const uint64_t* const* field_planes, uint64_t* scratch);
 
-class JitCompiler {
+class APEX_API JitCompiler {
 public:
     JitCompiler() noexcept;
     ~JitCompiler() noexcept;

@@ -25,7 +25,9 @@ public:
 
     void register_schema(const std::string& name, py::list fields_list, size_t stride) {
         std::vector<std::string> names;
+        names.reserve(py::len(fields_list));
         std::vector<apex_field_descriptor_t> fields;
+        fields.reserve(py::len(fields_list));
         
         for (auto item : fields_list) {
             auto tuple = item.cast<py::tuple>();
@@ -52,25 +54,9 @@ public:
     uint64_t execute(py::array_t<uint8_t, py::array::c_style | py::array::forcecast> data, size_t count) {
         py::buffer_info info = data.request();
         void* ptr = info.ptr;
-        size_t size_bytes = info.size * info.itemsize;
-
-        void* aligned_ptr = ptr;
-        bool needs_free = false;
-
-        // Ensure 64-byte alignment for the JIT kernel
-        if (reinterpret_cast<uintptr_t>(ptr) % 64 != 0) {
-            if (posix_memalign(&aligned_ptr, 64, size_bytes) != 0) {
-                throw std::runtime_error("Failed to allocate 64-byte aligned memory");
-            }
-            memcpy(aligned_ptr, ptr, size_bytes);
-            needs_free = true;
-        }
-
-        uint64_t result = apex_execute(handle_, aligned_ptr, count);
-
-        if (needs_free) {
-            free(aligned_ptr);
-        }
+        
+        // No need for alignment on the data buffer as gather_field uses memcpy
+        uint64_t result = apex_execute(handle_, ptr, count);
 
         if (result == (uint64_t)-1) {
             throw std::runtime_error("Execution failed");
@@ -87,6 +73,10 @@ PYBIND11_MODULE(apex_python, m) {
 
     m.def("create_universal_test_logic", []() {
         return reinterpret_cast<size_t>(apex_create_universal_test_logic());
+    });
+    
+    m.def("create_simple_logic", []() {
+        return reinterpret_cast<size_t>(apex_create_simple_logic());
     });
 
     py::class_<PyApexEngine>(m, "ApexEngine")

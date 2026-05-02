@@ -33,10 +33,20 @@ static void worker_thread(
     BitSlicer slicer;
     std::array<ColumnBuffer, 8> field_buffers;
 
-    struct alignas(64) ScratchpadBuffer {
-        uint64_t data[8 * 64];
-    };
-    ScratchpadBuffer scratchpad;
+    // Use heap-allocated aligned memory for scratchpad to avoid stack alignment issues
+    uint64_t* scratchpad = nullptr;
+    if (posix_memalign((void**)&scratchpad, 64, 8 * 64 * sizeof(uint64_t)) != 0) {
+        result->count = 0; // Ensure count is initialized on failure
+        return;
+    }
+    
+    // Ensure it's cleared
+    if (scratchpad) {
+        std::memset(scratchpad, 0, 8 * 64 * sizeof(uint64_t));
+    } else {
+        result->count = 0;
+        return;
+    }
 
     const size_t row_stride = config.row_stride;
     const size_t num_fields = config.fields.size();
@@ -52,7 +62,9 @@ static void worker_thread(
         __builtin_prefetch(chunk_base + 192 * row_stride, 0, 3);
 
         // Gather + slice all referenced fields
-        alignas(64) const uint64_t* field_planes[8] = {};
+        alignas(64) const uint64_t* field_planes[8];
+        std::memset(field_planes, 0, sizeof(field_planes));
+        
         for (size_t f = 0; f < num_fields && f < 8; ++f) {
             const size_t offset = config.fields[f]->offset;
 
@@ -83,10 +95,11 @@ static void worker_thread(
         }
 
         // Execute JIT kernel
-        uint64_t mask = config.kernel(field_planes, scratchpad.data);
+        uint64_t mask = config.kernel(field_planes, scratchpad);
         total_matches += static_cast<uint64_t>(__builtin_popcountll(mask));
     }
 
+    free(scratchpad);
     result->count = total_matches;
 }
 

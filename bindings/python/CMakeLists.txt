@@ -1,5 +1,6 @@
 # Python Bindings (PyBind11)
-find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+set(Python3_FIND_STRATEGY LOCATION)
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 if(Python3_FOUND)
     if(NOT TARGET pybind11::module)

@@ -57,6 +57,9 @@ __attribute__((visibility("default"))) uint64_t apex_execute(
 // Returns ir_root_ptr for: (Field0 + Field1) > Field2
 __attribute__((visibility("default"))) void* apex_create_universal_test_logic(void);
 
+// Returns ir_root_ptr for: Field0 > 10
+__attribute__((visibility("default"))) void* apex_create_simple_logic(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "apex/common.hpp"
+
 namespace apex::core {
 
 struct StringHash {

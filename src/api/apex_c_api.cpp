@@ -70,7 +70,7 @@ uint64_t apex_execute(apex_engine_h handle, const void* data_ptr, size_t count) 
 
     try {
         ApexEngine* engine = static_cast<ApexEngine*>(handle);
-        return engine->execute_parallel(data_ptr, count, 4); // Default 4 threads
+        return engine->execute(data_ptr, count); // Switch to single-threaded for stability verification
     } catch (...) {
         return (uint64_t)-1;
     }
@@ -82,6 +82,13 @@ void* apex_create_universal_test_logic(void) {
     auto sum = apex::builder::Add(f0, f1);
     auto f2 = apex::builder::Load("Field2");
     auto root = apex::builder::GT(sum, f2);
+    return root;
+}
+
+void* apex_create_simple_logic(void) {
+    auto f0 = apex::builder::Load("Field0");
+    auto c10 = apex::builder::Const(10);
+    auto root = apex::builder::GT(f0, c10);
     return root;
 }
 

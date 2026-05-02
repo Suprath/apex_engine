@@ -1,5 +1,6 @@
 #pragma once
 
+#include "apex/common.hpp"
 #include "apex/core/registry.hpp"
 #include "apex/core/types.hpp"
 #include "apex/compute/bit_slicer.hpp"
@@ -30,7 +31,7 @@ public:
                    uint64_t threshold) noexcept;
 
     // Expression-based API
-    void set_expression(std::string_view schema_name, ir::Node* expr_root) noexcept;
+    void set_expression(std::string_view schema_name, ir::Node* expr_root, ExecutionMode mode = ExecutionMode::BIT_SLICED) noexcept;
 
     uint64_t execute(const void* data_ptr, size_t row_count) noexcept;
     uint64_t execute_parallel(const void* data_ptr, size_t row_count, int num_threads = 4) noexcept;
@@ -59,6 +60,7 @@ private:
     struct ExprCompiledLogic {
         jit::ExprKernelFunc kernel;
         std::vector<const core::FieldDescriptor*> fields;  // indexed by field_idx
+        ExecutionMode mode;
     };
 
     core::SchemaRegistry registry_;

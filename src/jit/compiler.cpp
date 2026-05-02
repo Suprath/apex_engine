@@ -548,5 +548,151 @@ ExprKernelFunc JitCompiler::compile_expression(
     return fn;
 }
 
+ExprKernelFunc JitCompiler::compile_scalar_expression(
+    ir::Node* root,
+    const core::SchemaRegistry& registry,
+    std::string_view schema_name) noexcept {
+
+    (void)schema_name;
+    (void)registry;
+    if (!root) return nullptr;
+
+    using namespace asmjit;
+    using namespace asmjit::a64;
+
+    ExpressionAnalyzer analyzer;
+    analyzer.analyze(root);
+
+    // Assign field indices to LOAD nodes
+    std::unordered_map<std::string, int> field_to_idx;
+    for (auto* load_node : analyzer.load_nodes) {
+        std::string field_name(load_node->field_name);
+        if (field_to_idx.find(field_name) == field_to_idx.end()) {
+            field_to_idx[field_name] = field_to_idx.size();
+        }
+        load_node->field_idx = field_to_idx[field_name];
+    }
+
+    CodeHolder code;
+    code.init(runtime_->environment());
+    code.reserve_buffer(&code.section_by_id(0)->buffer(), 65536);
+    Assembler a(&code);
+
+    // ARM64 ABI: x0=field_arrays, x1=scratchpad, x30=return address
+    Gp field_arrays = x0;
+    Gp scratchpad = x1;
+
+    // Working registers
+    Gp final_mask = x19;
+    Gp row_index = x20;
+    Gp temp_ptr = x4;
+    Gp val_left = x2;
+    Gp val_right = x3;
+    Gp val_res = x5;
+
+    // Prologue
+    a.stp(x29, x30, Mem(sp, -16).pre());
+    a.mov(x29, sp);
+    a.stp(x19, x20, Mem(sp, -16).pre());
+
+    a.mov(final_mask, 0);
+    a.mov(row_index, 0);
+
+    Label loop_start = a.new_label();
+    Label loop_end = a.new_label();
+
+    a.bind(loop_start);
+    a.cmp(row_index, 64);
+    a.b(asmjit::a64::CondCode::kHS, loop_end);
+
+    // Linear post-order evaluation
+    for (size_t i = 0; i < analyzer.all_nodes.size(); ++i) {
+        ir::Node* node = analyzer.all_nodes[i];
+        
+        auto get_operand = [&](ir::Node* operand, Gp out_reg) {
+            if (!operand) return;
+            if (operand->kind == ir::NodeKind::LOAD) {
+                // ldr temp_ptr, [field_arrays + field_idx * 8]
+                a.ldr(temp_ptr, Mem(field_arrays, operand->field_idx * 8));
+                // ldr out_reg, [temp_ptr, row_index LSL 3]
+                a.ldr(out_reg, Mem(temp_ptr, row_index, asmjit::a64::lsl(3)));
+            } else if (operand->kind == ir::NodeKind::CONST) {
+                emit_mov_imm64(a, out_reg, operand->const_value);
+            } else {
+                // Find index of this operand in all_nodes
+                size_t op_idx = 0;
+                for (size_t j = 0; j < i; ++j) {
+                    if (analyzer.all_nodes[j] == operand) { op_idx = j; break; }
+                }
+                a.ldr(out_reg, Mem(scratchpad, op_idx * 8));
+            }
+        };
+
+        get_operand(node->left, val_left);
+        get_operand(node->right, val_right);
+
+        switch (node->kind) {
+            case ir::NodeKind::LOAD:
+            case ir::NodeKind::CONST:
+                // Already handled in get_operand for parents. But we need to store it to scratchpad if it's evaluated here.
+                get_operand(node, val_res);
+                break;
+            case ir::NodeKind::ADD:
+                a.add(val_res, val_left, val_right);
+                break;
+            case ir::NodeKind::SUB:
+                a.sub(val_res, val_left, val_right);
+                break;
+            case ir::NodeKind::GT:
+                a.cmp(val_left, val_right);
+                a.cset(val_res, asmjit::a64::CondCode::kHI); // Unsigned GT
+                break;
+            case ir::NodeKind::LT:
+                a.cmp(val_left, val_right);
+                a.cset(val_res, asmjit::a64::CondCode::kLO); // Unsigned LT
+                break;
+            case ir::NodeKind::EQ:
+                a.cmp(val_left, val_right);
+                a.cset(val_res, asmjit::a64::CondCode::kEQ);
+                break;
+            case ir::NodeKind::AND:
+                a.and_(val_res, val_left, val_right);
+                break;
+            case ir::NodeKind::OR:
+                a.orr(val_res, val_left, val_right);
+                break;
+            default: break;
+        }
+
+        // Store result to scratchpad
+        a.str(val_res, Mem(scratchpad, i * 8));
+    }
+
+    // Root result is in val_res (or scratchpad at all_nodes.size() - 1). It is 1 or 0.
+    // Shift by row_index and OR into final_mask
+    a.lsl(val_res, val_res, row_index);
+    a.orr(final_mask, final_mask, val_res);
+
+    a.add(row_index, row_index, 1);
+    a.b(loop_start);
+
+    a.bind(loop_end);
+
+    // Epilogue
+    a.mov(x0, final_mask); // Return value
+    a.ldp(x19, x20, Mem(sp, 16).post());
+    a.ldp(x29, x30, Mem(sp, 16).post());
+    a.ret(x30);
+
+    // dump_bytecode(code, "Scalar Expression Kernel");
+
+    ExprKernelFunc fn = nullptr;
+    Error err = runtime_->add(&fn, &code);
+    if (err != kErrorOk) {
+        return nullptr;
+    }
+    return fn;
+}
+
 } // namespace jit
 } // namespace apex

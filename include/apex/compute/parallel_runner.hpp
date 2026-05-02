@@ -4,6 +4,7 @@
 #include "apex/compute/column_buffer.hpp"
 #include "apex/jit/compiler.hpp"
 #include "apex/core/registry.hpp"
+#include "apex/common.hpp"
 #include <cstdint>
 #include <vector>
 
@@ -15,6 +16,7 @@ public:
         jit::ExprKernelFunc kernel;
         std::vector<const core::FieldDescriptor*> fields;
         size_t row_stride;
+        ExecutionMode mode;
     };
 
     /// Execute the JIT kernel across `total_rows` using `num_threads` worker threads.

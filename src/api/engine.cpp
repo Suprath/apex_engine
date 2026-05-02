@@ -29,10 +29,15 @@ void ApexEngine::set_logic(std::string_view schema_name,
     compiled_logic_[logic_key] = {field, kernel};
 }
 
-void ApexEngine::set_expression(std::string_view schema_name, ir::Node* expr_root) noexcept {
+void ApexEngine::set_expression(std::string_view schema_name, ir::Node* expr_root, ExecutionMode mode) noexcept {
     if (!expr_root) return;
 
-    auto kernel = compiler_.compile_expression(expr_root, registry_, schema_name);
+    jit::ExprKernelFunc kernel = nullptr;
+    if (mode == ExecutionMode::BIT_SLICED) {
+        kernel = compiler_.compile_expression(expr_root, registry_, schema_name);
+    } else {
+        kernel = compiler_.compile_scalar_expression(expr_root, registry_, schema_name);
+    }
     if (!kernel) return;
 
     // Collect referenced fields from the expression tree
@@ -69,7 +74,7 @@ void ApexEngine::set_expression(std::string_view schema_name, ir::Node* expr_roo
     });
 
     std::string expr_key = std::string(schema_name);
-    expr_logic_[expr_key] = {kernel, fields};
+    expr_logic_[expr_key] = {kernel, fields, mode};
 }
 
 void ApexEngine::gather_field(const void* data_ptr,
@@ -137,7 +142,9 @@ uint64_t ApexEngine::process_chunk_expr(
 
     for (size_t i = 0; i < expr_logic.fields.size() && i < 8; ++i) {
         gather_field(data_ptr, expr_logic.fields[i], row_stride, row_count, field_buffers_[i]);
-        slicer_.slice(field_buffers_[i], field_buffers_[i]);
+        if (expr_logic.mode == ExecutionMode::BIT_SLICED) {
+            slicer_.slice(field_buffers_[i], field_buffers_[i]);
+        }
         field_planes_array[i] = field_buffers_[i].data;
     }
 
@@ -233,6 +240,7 @@ uint64_t ApexEngine::execute_parallel(const void* data_ptr, size_t row_count, in
         config.kernel = expr_logic.kernel;
         config.fields = expr_logic.fields;
         config.row_stride = schema_it->second.row_stride;
+        config.mode = expr_logic.mode;
 
         return compute::ParallelRunner::run(data_ptr, row_count, config, num_threads);
     }

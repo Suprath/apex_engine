@@ -76,7 +76,9 @@ static void worker_thread(
                 field_buffers[f].data[i] = 0;
             }
 
-            slicer.slice(field_buffers[f], field_buffers[f]);
+            if (config.mode == ExecutionMode::BIT_SLICED) {
+                slicer.slice(field_buffers[f], field_buffers[f]);
+            }
             field_planes[f] = field_buffers[f].data;
         }
 

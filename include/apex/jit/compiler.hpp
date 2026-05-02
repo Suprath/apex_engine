@@ -30,6 +30,11 @@ public:
         const core::SchemaRegistry& registry,
         std::string_view schema_name) noexcept;
 
+    ExprKernelFunc compile_scalar_expression(
+        ir::Node* root,
+        const core::SchemaRegistry& registry,
+        std::string_view schema_name) noexcept;
+
 private:
     void dump_bytecode(const asmjit::CodeHolder& code, const char* label) const noexcept;
 

@@ -43,26 +43,14 @@ if(highway_FOUND)
     target_compile_definitions(test_sdk_iot PRIVATE APEX_HAS_HIGHWAY)
 endif()
 
-add_test(NAME SDKIoTTests COMMAND test_sdk_iot)
+# Universal C++ SDK test
+add_executable(test_universal_cxx test_universal_cxx.cpp)
+target_include_directories(test_universal_cxx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_link_libraries(test_universal_cxx PRIVATE apex)
+target_compile_options(test_universal_cxx PRIVATE ${APEX_COMPILE_FLAGS})
+add_test(NAME UniversalCXXTests COMMAND test_universal_cxx)
 
-# Universal Expression Engine test
-add_executable(test_universal_logic test_universal_logic.cpp)
-target_include_directories(test_universal_logic PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_link_libraries(test_universal_logic PRIVATE apex)
-target_compile_options(test_universal_logic PRIVATE ${APEX_COMPILE_FLAGS})
 
-if(asmjit_FOUND)
-    target_compile_definitions(test_universal_logic PRIVATE APEX_HAS_ASMJIT)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
-        target_include_directories(test_universal_logic PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
-    endif()
-endif()
-
-if(highway_FOUND)
-    target_compile_definitions(test_universal_logic PRIVATE APEX_HAS_HIGHWAY)
-endif()
-
-add_test(NAME UniversalLogicTests COMMAND test_universal_logic)
 
 # Infrastructure Audit test
 add_executable(test_infrastructure_audit test_infrastructure_audit.cpp)
@@ -83,24 +71,7 @@ endif()
 
 add_test(NAME InfrastructureAudit COMMAND test_infrastructure_audit)
 
-# Hybrid SDK test
-add_executable(test_hybrid_sdk test_hybrid_sdk.cpp)
-target_include_directories(test_hybrid_sdk PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-target_link_libraries(test_hybrid_sdk PRIVATE apex)
-target_compile_options(test_hybrid_sdk PRIVATE ${APEX_COMPILE_FLAGS})
 
-if(asmjit_FOUND)
-    target_compile_definitions(test_hybrid_sdk PRIVATE APEX_HAS_ASMJIT)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
-        target_include_directories(test_hybrid_sdk PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
-    endif()
-endif()
-
-if(highway_FOUND)
-    target_compile_definitions(test_hybrid_sdk PRIVATE APEX_HAS_HIGHWAY)
-endif()
-
-add_test(NAME HybridSDKTests COMMAND test_hybrid_sdk)
 
 # Memory fabric tests (requires iceoryx)
 if(iceoryx_FOUND)

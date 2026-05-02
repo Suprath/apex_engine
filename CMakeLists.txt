@@ -21,7 +21,7 @@ endif()
 set(APEX_COMPILE_FLAGS_STR "-O3 -march=native -ffast-math -fno-finite-math-only -Wall -Wextra")
 
 # Release flags (production)
-set(CMAKE_CXX_FLAGS_RELEASE "${APEX_COMPILE_FLAGS_STR}")
+set(CMAKE_CXX_FLAGS_RELEASE "${APEX_COMPILE_FLAGS_STR} -fvisibility=hidden")
 
 # Debug flags with sanitizers
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer")
@@ -45,6 +45,7 @@ set(APEX_SOURCES
     src/compute/parallel_runner.cpp
     src/api/api.cpp
     src/api/engine.cpp
+    src/api/apex_c_api.cpp
     src/telemetry/telemetry.cpp
 )
 
@@ -53,11 +54,7 @@ add_library(apex_obj OBJECT ${APEX_SOURCES})
 target_compile_options(apex_obj PRIVATE ${APEX_COMPILE_FLAGS})
 target_include_directories(apex_obj PUBLIC include)
 
-# Add generated FlatBuffers headers directory
-if(flatbuffers_FOUND)
-    target_include_directories(apex_obj PUBLIC "${FLATBUFFERS_GENERATED_DIR}")
-    add_dependencies(apex_obj apex_flatbuffers_gen)
-endif()
+# (FlatBuffers generation moved to examples/trading)
 
 # External Dependencies: Try submodules first, then system packages
 
@@ -124,25 +121,7 @@ else()
     endif()
 endif()
 
-# Generate C++ headers from FlatBuffers schema files
-set(FLATBUFFERS_SCHEMA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/fbs")
-set(FLATBUFFERS_GENERATED_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/flatbuffers")
-
-if(flatbuffers_FOUND AND EXISTS "${FLATBUFFERS_SCHEMA_DIR}")
-    file(MAKE_DIRECTORY "${FLATBUFFERS_GENERATED_DIR}")
-
-    # Generate C++ from market_data.fbs
-    add_custom_command(
-        OUTPUT "${FLATBUFFERS_GENERATED_DIR}/market_data_generated.h"
-        COMMAND flatc -c --gen-onefile -o "${FLATBUFFERS_GENERATED_DIR}" "${FLATBUFFERS_SCHEMA_DIR}/market_data.fbs"
-        DEPENDS "${FLATBUFFERS_SCHEMA_DIR}/market_data.fbs"
-        COMMENT "Generating FlatBuffers C++ headers from market_data.fbs"
-    )
-
-    add_custom_target(apex_flatbuffers_gen ALL
-        DEPENDS "${FLATBUFFERS_GENERATED_DIR}/market_data_generated.h"
-    )
-endif()
+# (FlatBuffers headers generated in examples/trading)
 
 # Link external libraries to apex_obj (shared compilation unit)
 target_link_libraries(apex_obj PRIVATE Threads::Threads)
@@ -175,18 +154,19 @@ add_library(apex SHARED
 )
 target_compile_options(apex PRIVATE ${APEX_COMPILE_FLAGS})
 target_include_directories(apex PUBLIC include)
+set_target_properties(apex PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-# Add generated FlatBuffers headers directory
-if(flatbuffers_FOUND)
-    target_include_directories(apex PUBLIC "${FLATBUFFERS_GENERATED_DIR}")
-endif()
+
 
 # Propagate external library links to apex shared library
 target_link_libraries(apex PRIVATE Threads::Threads)
 
 if(asmjit_FOUND)
     target_link_libraries(apex PRIVATE asmjit::asmjit)
-    target_compile_definitions(apex PRIVATE APEX_HAS_ASMJIT)
+    target_compile_definitions(apex PUBLIC APEX_HAS_ASMJIT)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/asmjit")
+        target_include_directories(apex PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/external/asmjit")
+    endif()
 endif()
 
 if(highway_FOUND)
@@ -203,21 +183,7 @@ if(flatbuffers_FOUND)
     target_compile_definitions(apex PRIVATE APEX_HAS_FLATBUFFERS)
 endif()
 
-# EXECUTABLE: production runner (apex_engine)
-add_executable(apex_engine src/main.cpp)
-target_compile_options(apex_engine PRIVATE ${APEX_COMPILE_FLAGS})
-target_include_directories(apex_engine PRIVATE include)
 
-if(asmjit_FOUND)
-    target_include_directories(apex_engine PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/external/asmjit)
-endif()
-
-# Add generated FlatBuffers headers directory
-if(flatbuffers_FOUND)
-    target_include_directories(apex_engine PRIVATE "${FLATBUFFERS_GENERATED_DIR}")
-endif()
-
-target_link_libraries(apex_engine PRIVATE apex)
 
 # Testing
 enable_testing()
@@ -225,3 +191,15 @@ add_subdirectory(tests)
 
 # Benchmarking
 add_subdirectory(benchmarks)
+
+# Examples
+add_subdirectory(examples/trading)
+
+# Bindings
+add_subdirectory(bindings/python)
+add_subdirectory(bindings/java)
+
+# Installation
+set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/dist")
+install(TARGETS apex DESTINATION lib)
+install(FILES include/apex/apex_c_api.h include/apex/Apex.hpp DESTINATION include)

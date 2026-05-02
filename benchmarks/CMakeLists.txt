@@ -23,11 +23,7 @@ if(highway_FOUND AND asmjit_FOUND)
     target_link_libraries(bench_apex_final PRIVATE apex)
     target_compile_options(bench_apex_final PRIVATE ${APEX_COMPILE_FLAGS})
 
-    add_executable(bench_10b_tps bench_10b_tps.cpp)
-    target_include_directories(bench_10b_tps PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-    target_include_directories(bench_10b_tps PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit)
-    target_link_libraries(bench_10b_tps PRIVATE apex)
-    target_compile_options(bench_10b_tps PRIVATE ${APEX_COMPILE_FLAGS})
+
 
     message(STATUS "Benchmarks configured: bench_bit_slicer, bench_apex_final, bench_10b_tps")
 else()

@@ -21,6 +21,9 @@ RUN apt-get update && apt-get install -y \
     gdb \
     libacl1-dev \
     libncurses5-dev \
+    python3.10-dev \
+    python3-dev \
+    openjdk-11-jdk \
     && ln -sf /usr/bin/clang-15 /usr/bin/clang \
     && ln -sf /usr/bin/clang++-15 /usr/bin/clang++
 

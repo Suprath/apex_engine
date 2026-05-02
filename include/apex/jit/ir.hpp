@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <cstdint>
+#include "apex/common.hpp"
 
 namespace apex {
 namespace ir {
@@ -69,19 +70,19 @@ struct NodePool {
 extern thread_local NodePool g_pool;
 
 // Builder functions
-ir::Node* Load(std::string_view field_name) noexcept;
-ir::Node* Const(int64_t value) noexcept;
-ir::Node* Add(ir::Node* a, ir::Node* b) noexcept;
-ir::Node* Sub(ir::Node* a, ir::Node* b) noexcept;
-ir::Node* GT(ir::Node* a, ir::Node* b) noexcept;
-ir::Node* LT(ir::Node* a, ir::Node* b) noexcept;
-ir::Node* EQ(ir::Node* a, ir::Node* b) noexcept;
-ir::Node* And(ir::Node* a, ir::Node* b) noexcept;
-ir::Node* Or(ir::Node* a, ir::Node* b) noexcept;
-ir::Node* Not(ir::Node* a) noexcept;
-ir::Node* Select(ir::Node* cond, ir::Node* a, ir::Node* b) noexcept;
-ir::Node* LSL(ir::Node* a, int shift) noexcept;
-ir::Node* LSR(ir::Node* a, int shift) noexcept;
+APEX_API ir::Node* Load(std::string_view field_name) noexcept;
+APEX_API ir::Node* Const(int64_t value) noexcept;
+APEX_API ir::Node* Add(ir::Node* a, ir::Node* b) noexcept;
+APEX_API ir::Node* Sub(ir::Node* a, ir::Node* b) noexcept;
+APEX_API ir::Node* GT(ir::Node* a, ir::Node* b) noexcept;
+APEX_API ir::Node* LT(ir::Node* a, ir::Node* b) noexcept;
+APEX_API ir::Node* EQ(ir::Node* a, ir::Node* b) noexcept;
+APEX_API ir::Node* And(ir::Node* a, ir::Node* b) noexcept;
+APEX_API ir::Node* Or(ir::Node* a, ir::Node* b) noexcept;
+APEX_API ir::Node* Not(ir::Node* a) noexcept;
+APEX_API ir::Node* Select(ir::Node* cond, ir::Node* a, ir::Node* b) noexcept;
+APEX_API ir::Node* LSL(ir::Node* a, int shift) noexcept;
+APEX_API ir::Node* LSR(ir::Node* a, int shift) noexcept;
 
 } // namespace builder
 

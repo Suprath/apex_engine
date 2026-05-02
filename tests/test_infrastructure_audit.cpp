@@ -249,7 +249,7 @@ int main() {
         engine->register_schema("stress", fields, 8);
         engine->set_expression("stress", apex::builder::GT(apex::builder::Load("f0"), apex::builder::Const(100)), apex::ExecutionMode::BIT_SLICED);
 
-        const size_t ROWS = 10_000_000;
+        const size_t ROWS = 10'000'000;
         std::vector<uint8_t> data(ROWS * 8, 0);
 
         std::vector<double> thp_history;
@@ -258,7 +258,7 @@ int main() {
             engine->execute(data.data(), ROWS);
             auto end = std::chrono::high_resolution_clock::now();
             double elapsed_s = std::chrono::duration<double>(end - start).count();
-            thp_history.push_back((ROWS / elapsed_s) / 1_000_000.0);
+            thp_history.push_back((ROWS / elapsed_s) / 1'000'000.0);
         }
 
         double first = thp_history[0];

@@ -26,7 +26,9 @@ JNIEXPORT jint JNICALL Java_com_apex_engine_ApexEngine_nativeRegisterSchema(
     jsize num_fields = env->GetArrayLength(fields);
     
     std::vector<std::string> cpp_names;
+    cpp_names.reserve(num_fields);
     std::vector<apex_field_descriptor_t> c_fields;
+    c_fields.reserve(num_fields);
     
     jclass field_class = env->FindClass("com/apex/engine/ApexEngine$FieldDescriptor");
     jfieldID name_id = env->GetFieldID(field_class, "name", "Ljava/lang/String;");
@@ -85,25 +87,7 @@ JNIEXPORT jlong JNICALL Java_com_apex_engine_ApexEngine_nativeExecute(
     void* buffer = env->GetDirectBufferAddress(data);
     if (!buffer) return -1;
     
-    void* aligned_ptr = buffer;
-    bool needs_free = false;
-    
-    if (reinterpret_cast<uintptr_t>(buffer) % 64 != 0) {
-        jlong capacity = env->GetDirectBufferCapacity(data);
-        if (posix_memalign(&aligned_ptr, 64, capacity) != 0) {
-            return -1;
-        }
-        memcpy(aligned_ptr, buffer, capacity);
-        needs_free = true;
-    }
-    
-    uint64_t result = apex_execute(reinterpret_cast<apex_engine_h>(handle), aligned_ptr, count);
-    
-    if (needs_free) {
-        free(aligned_ptr);
-    }
-    
-    return result;
+    return apex_execute(reinterpret_cast<apex_engine_h>(handle), buffer, count);
 }
 
 } // extern "C"

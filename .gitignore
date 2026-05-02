@@ -9,6 +9,11 @@ cmake-build-release/
 *.dylib
 *.a
 *.o
+*.class
+*.jar
+
+# Java build
+build_java/
 
 # Executables
 apex_engine

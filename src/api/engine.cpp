@@ -1,4 +1,5 @@
 #include "apex/engine.hpp"
+#include "apex/compute/parallel_runner.hpp"
 #include <algorithm>
 #include <cstring>
 #include <functional>
@@ -78,14 +79,36 @@ void ApexEngine::gather_field(const void* data_ptr,
                               compute::ColumnBuffer& out) const noexcept {
     const uint8_t* base = static_cast<const uint8_t*>(data_ptr);
     size_t rows_to_gather = std::min(row_count, size_t(64));
+    const size_t offset = field->offset;
 
-    for (size_t i = 0; i < rows_to_gather; i++) {
-        const uint8_t* row_ptr = base + i * row_stride + field->offset;
-        std::memcpy(&out.data[i], row_ptr, sizeof(uint64_t));
+    // 4x unrolled gather: exploit M3 dual load units
+    size_t i = 0;
+    for (; i + 4 <= rows_to_gather; i += 4) {
+        // Prefetch 2 blocks (128 rows) ahead
+        __builtin_prefetch(base + (i + 128) * row_stride + offset, 0, 3);
+        __builtin_prefetch(base + (i + 130) * row_stride + offset, 0, 3);
+
+        // 4x scalar loads from strided AoS memory (NEON can't gather from non-contiguous)
+        uint64_t v0, v1, v2, v3;
+        std::memcpy(&v0, base + (i + 0) * row_stride + offset, 8);
+        std::memcpy(&v1, base + (i + 1) * row_stride + offset, 8);
+        std::memcpy(&v2, base + (i + 2) * row_stride + offset, 8);
+        std::memcpy(&v3, base + (i + 3) * row_stride + offset, 8);
+
+        // Store as contiguous block — compiler will vectorize to stp
+        out.data[i + 0] = v0;
+        out.data[i + 1] = v1;
+        out.data[i + 2] = v2;
+        out.data[i + 3] = v3;
+    }
+
+    // Handle remaining rows (0-3)
+    for (; i < rows_to_gather; i++) {
+        std::memcpy(&out.data[i], base + i * row_stride + offset, 8);
     }
 
     // Zero-pad remaining slots
-    for (size_t i = rows_to_gather; i < 64; i++) {
+    for (; i < 64; i++) {
         out.data[i] = 0;
     }
 }
@@ -108,22 +131,14 @@ uint64_t ApexEngine::process_chunk_expr(
     size_t row_stride,
     size_t row_count,
     const ExprCompiledLogic& expr_logic) noexcept {
-    std::cout << "[DEBUG] process_chunk_expr: " << expr_logic.fields.size() << " fields\n";
-    std::cout.flush();
 
     // Gather all referenced fields - use aligned array
     alignas(64) const uint64_t* field_planes_array[8] = {};
 
     for (size_t i = 0; i < expr_logic.fields.size() && i < 8; ++i) {
-        std::cout << "[DEBUG] Gathering field " << i << "\n";
-        std::cout.flush();
         gather_field(data_ptr, expr_logic.fields[i], row_stride, row_count, field_buffers_[i]);
-        std::cout << "[DEBUG] Slicing field " << i << "\n";
-        std::cout.flush();
         slicer_.slice(field_buffers_[i], field_buffers_[i]);
         field_planes_array[i] = field_buffers_[i].data;
-        std::cout << "[DEBUG] Field " << i << " ready at 0x" << std::hex << (uintptr_t)field_buffers_[i].data << std::dec << "\n";
-        std::cout.flush();
     }
 
     // Thread-local scratchpad (4KB)
@@ -132,23 +147,8 @@ uint64_t ApexEngine::process_chunk_expr(
     };
     static thread_local ScratchpadBuffer scratchpad_buffer;
 
-    // Diagnostic output
-    std::cout << "[DIAG] field_planes_array addr: 0x" << std::hex << (uintptr_t)field_planes_array << std::dec;
-    std::cout << " (aligned: " << ((uintptr_t)field_planes_array % 64 == 0 ? "YES" : "NO") << ")\n";
-    for (size_t i = 0; i < expr_logic.fields.size() && i < 8; ++i) {
-        std::cout << "[DIAG] field_planes[" << i << "]: 0x" << std::hex << (uintptr_t)field_planes_array[i] << std::dec;
-        std::cout << " (aligned: " << ((uintptr_t)field_planes_array[i] % 8 == 0 ? "YES" : "NO") << ")\n";
-    }
-    std::cout << "[DIAG] scratchpad addr: 0x" << std::hex << (uintptr_t)scratchpad_buffer.data << std::dec;
-    std::cout << " (aligned: " << ((uintptr_t)scratchpad_buffer.data % 64 == 0 ? "YES" : "NO") << ")\n";
-    std::cout.flush();
-
-    std::cout << "[DEBUG] Calling kernel with " << expr_logic.fields.size() << " field_planes\n";
-    std::cout.flush();
     // Call the JIT kernel
     uint64_t result_mask = expr_logic.kernel(field_planes_array, scratchpad_buffer.data);
-    std::cout << "[DEBUG] Kernel returned: " << result_mask << "\n";
-    std::cout.flush();
 
     return result_mask;
 }
@@ -214,6 +214,30 @@ uint64_t ApexEngine::execute(const void* data_ptr, size_t row_count) noexcept {
     }
 
     return total_matches;
+}
+
+uint64_t ApexEngine::execute_parallel(const void* data_ptr, size_t row_count, int num_threads) noexcept {
+    if (expr_logic_.empty()) {
+        return execute(data_ptr, row_count);
+    }
+
+    auto meta_it = expr_logic_.begin();
+    if (meta_it != expr_logic_.end()) {
+        const std::string& schema_name = meta_it->first;
+        const ExprCompiledLogic& expr_logic = meta_it->second;
+
+        auto schema_it = schema_metadata_.find(schema_name);
+        if (schema_it == schema_metadata_.end()) return 0;
+
+        compute::ParallelRunner::TaskConfig config;
+        config.kernel = expr_logic.kernel;
+        config.fields = expr_logic.fields;
+        config.row_stride = schema_it->second.row_stride;
+
+        return compute::ParallelRunner::run(data_ptr, row_count, config, num_threads);
+    }
+
+    return 0;
 }
 
 } // namespace apex

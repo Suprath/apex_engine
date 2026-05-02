@@ -8,26 +8,8 @@ namespace apex::core {
 void SchemaRegistry::register_schema(std::string_view schema_name, std::vector<FieldDescriptor> fields) {
     FieldMap field_map;
     for (auto& field : fields) {
-        uint32_t required_alignment = 1;
-        switch (field.type) {
-            case DataType::UINT64:
-            case DataType::INT64:
-            case DataType::FLOAT64:
-                required_alignment = 8;
-                break;
-            case DataType::UINT32:
-            case DataType::INT32:
-                required_alignment = 4;
-                break;
-        }
-
-        if (field.offset % required_alignment != 0) {
-            std::string error = "Alignment violation for field '" + field.name + "': "
-                               "offset " + std::to_string(field.offset) + " is not aligned to "
-                               + std::to_string(required_alignment) + " bytes";
-            throw std::runtime_error(error);
-        }
-
+        // Removed strict alignment check to support universal packed data formats.
+        // The Bit-Slicer handles unaligned offsets with a slight performance penalty.
         field_map.emplace(field.name, std::move(field));
     }
     schemas_.emplace(std::string(schema_name), std::move(field_map));

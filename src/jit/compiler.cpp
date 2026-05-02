@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 #include <cstring>
+#include <functional>
 
 namespace apex {
 namespace jit {
@@ -36,6 +37,31 @@ void JitCompiler::dump_bytecode(const asmjit::CodeHolder& code, const char* labe
         std::cout << std::dec << "\n";
     }
 }
+
+// Pre-sliced constant pool: stores bit-planes for CONST nodes
+struct ConstPool {
+    std::unordered_map<int64_t, uint64_t*> pools;
+
+    uint64_t* get_or_create(int64_t const_value) noexcept {
+        if (pools.find(const_value) != pools.end()) {
+            return pools[const_value];
+        }
+        uint64_t* bit_planes = new uint64_t[64];
+        for (int bit = 0; bit < 64; ++bit) {
+            bit_planes[bit] = ((const_value >> bit) & 1) ? ~0ULL : 0ULL;
+        }
+        pools[const_value] = bit_planes;
+        return bit_planes;
+    }
+
+    ~ConstPool() noexcept {
+        for (auto& [_, planes] : pools) {
+            delete[] planes;
+        }
+    }
+};
+
+thread_local ConstPool g_const_pool;
 
 KernelFunc JitCompiler::compile_comparison(uint64_t threshold) noexcept {
     using namespace asmjit;
@@ -156,26 +182,355 @@ private:
     bool used_[MAX_SLOTS] = {};
 };
 
+// Helper: depth-first visitor to collect metadata
+struct ExpressionAnalyzer {
+    std::unordered_map<ir::Node*, int> node_map;
+    std::vector<ir::Node*> load_nodes;      // Only LOAD nodes
+    std::vector<ir::Node*> const_nodes;     // Only CONST nodes (will be pre-sliced)
+    std::vector<ir::Node*> arithmetic_nodes;
+    std::vector<ir::Node*> all_nodes;
+
+    void analyze(ir::Node* node) noexcept {
+        if (!node) return;
+
+        // Check if already visited
+        if (node_map.find(node) != node_map.end()) return;
+
+        // Visit children first (post-order)
+        if (node->left) analyze(node->left);
+        if (node->right) analyze(node->right);
+        if (node->cond) analyze(node->cond);
+
+        all_nodes.push_back(node);
+
+        // Determine result kind and categorize
+        switch (node->kind) {
+            case ir::NodeKind::LOAD:
+                node->result_kind = ir::ResultKind::BITPLANE;
+                load_nodes.push_back(node);
+                break;
+
+            case ir::NodeKind::CONST:
+                node->result_kind = ir::ResultKind::BITPLANE;
+                const_nodes.push_back(node);
+                break;
+
+            case ir::NodeKind::ADD:
+            case ir::NodeKind::SUB:
+            case ir::NodeKind::LSL:
+            case ir::NodeKind::LSR:
+                node->result_kind = ir::ResultKind::BITPLANE;
+                arithmetic_nodes.push_back(node);
+                break;
+
+            case ir::NodeKind::GT:
+            case ir::NodeKind::LT:
+            case ir::NodeKind::EQ:
+            case ir::NodeKind::AND:
+            case ir::NodeKind::OR:
+            case ir::NodeKind::NOT:
+            case ir::NodeKind::SELECT:
+                node->result_kind = ir::ResultKind::BITMASK;
+                break;
+        }
+
+        node_map[node] = all_nodes.size() - 1;
+    }
+};
+
 ExprKernelFunc JitCompiler::compile_expression(
     ir::Node* root,
     const core::SchemaRegistry& registry,
     std::string_view schema_name) noexcept {
+    (void)registry;
+    (void)schema_name;
     if (!root) return nullptr;
 
     using namespace asmjit;
     using namespace asmjit::a64;
 
+    // Analysis pass: collect nodes and assign metadata
+    ExpressionAnalyzer analyzer;
+    analyzer.analyze(root);
+
+    // Assign field indices to LOAD nodes only (CONST nodes do NOT go into the field array)
+    std::unordered_map<std::string, int> field_to_idx;
+    for (auto* load_node : analyzer.load_nodes) {
+        std::string field_name(load_node->field_name);
+        if (field_to_idx.find(field_name) == field_to_idx.end()) {
+            field_to_idx[field_name] = field_to_idx.size();
+        }
+        load_node->field_idx = field_to_idx[field_name];
+    }
+
+    // Pre-slice CONST nodes into bit-vectors in C++
+    std::unordered_map<ir::Node*, uint64_t*> const_bit_planes;
+    for (auto* const_node : analyzer.const_nodes) {
+        const_bit_planes[const_node] = g_const_pool.get_or_create(const_node->const_value);
+        const_node->field_idx = -2;  // Mark as const-pool (not a field index)
+    }
+
+    // Allocate scratchpad slots for arithmetic results
+    ScratchpadManager scratch_mgr;
+    for (auto* arith_node : analyzer.arithmetic_nodes) {
+        arith_node->slot_id = scratch_mgr.alloc_slot();
+    }
+
+    // Assign carry registers to ADD/SUB nodes (x21-x28)
+    int carry_reg_idx = 0;
+    for (auto* arith_node : analyzer.arithmetic_nodes) {
+        if ((arith_node->kind == ir::NodeKind::ADD || arith_node->kind == ir::NodeKind::SUB)
+            && carry_reg_idx < 8) {
+            arith_node->carry_reg = carry_reg_idx++;
+        }
+    }
+
     CodeHolder code;
     code.init(runtime_->environment());
+    code.reserve_buffer(&code.section_by_id(0)->buffer(), 65536);
     Assembler a(&code);
 
-    // For now, implement a simplified version that handles basic GT comparisons
-    // This can be extended to full expression trees in future iterations
+    // ARM64 ABI: x0=field_planes_array, x1=scratchpad, x30=return address
+    Gp field_planes_array = x0;
+    Gp scratchpad = x1;
 
-    Gp result_mask = x9;
-    a.mov(result_mask, 0);
-    a.mov(x0, result_mask);
+    // Callee-saved base registers: x19=field_planes_array, x20=scratchpad
+    // Carry registers: x21-x28
+    static const Gp carry_regs[] = {x21, x22, x23, x24, x25, x26, x27, x28};
+
+    // Working registers
+    Gp field_planes_ptr = x19;  // Callee-saved: field_planes_array (set in prologue)
+    Gp scratch_ptr = x20;       // Callee-saved: scratchpad (set in prologue)
+    Gp bit_index = x15;         // JIT loop counter: 0→63 (non-callee-saved)
+    Gp plane_a = x2;
+    Gp plane_b = x3;
+    Gp temp_ptr = x4;           // Temporary for field pointer loads
+    Gp result = x5;
+    Gp scratch1 = x6;           // Scratch register 1
+    Gp scratch2 = x13;          // Scratch register 2
+    Gp scratch3 = x14;          // Scratch register 3
+
+    // ===== Standard ARM64 Procedure Call Frame =====
+    a.stp(x29, x30, Mem(sp, -16).pre());
+    a.mov(x29, sp);
+    a.stp(x19, x20, Mem(sp, -16).pre());
+    a.stp(x21, x22, Mem(sp, -16).pre());
+    a.stp(x23, x24, Mem(sp, -16).pre());
+    a.stp(x25, x26, Mem(sp, -16).pre());
+    a.stp(x27, x28, Mem(sp, -16).pre());
+
+    a.mov(field_planes_ptr, field_planes_array);
+    a.mov(scratch_ptr, scratchpad);
+
+    // Initialize carry registers
+    for (auto* arith_node : analyzer.arithmetic_nodes) {
+        if (arith_node->carry_reg >= 0) {
+            if (arith_node->kind == ir::NodeKind::ADD) {
+                a.mov(carry_regs[arith_node->carry_reg], 0);
+            } else if (arith_node->kind == ir::NodeKind::SUB) {
+                a.mov(carry_regs[arith_node->carry_reg], 0);  // FIXED: Borrow starts at 0, not 1
+            }
+        }
+    }
+
+    // =====================================================================
+    // PHASE 1: Arithmetic JIT Loop (0 → 63)
+    // =====================================================================
+
+    Label loop_start = a.new_label();
+    Label loop_end = a.new_label();
+
+    a.mov(bit_index, 0);
+    a.bind(loop_start);
+    a.cmp(bit_index, 64);
+    a.b(asmjit::a64::CondCode::kHS, loop_end);  // Unsigned >= 64
+
+    for (auto* node : analyzer.arithmetic_nodes) {
+        if (node->kind != ir::NodeKind::ADD && node->kind != ir::NodeKind::SUB) continue;
+
+        auto get_operand_at_bit = [&](ir::Node* operand, Gp& out_reg) {
+            if (!operand) return;
+
+            if (operand->kind == ir::NodeKind::LOAD) {
+                // Load: field_planes_array[field_idx] -> temp_ptr, then temp_ptr[bit_index * 8]
+                int field_offset = operand->field_idx * 8;
+                a.ldr(temp_ptr, Mem(field_planes_ptr, field_offset));
+                // temp_ptr now points to bit-planes for this field
+                // Compute offset = bit_index * 8 in scratch3
+                a.lsl(scratch3, bit_index, 3);
+                // Load bit-plane: temp_ptr[bit_index * 8]
+                a.ldr(out_reg, Mem(temp_ptr, scratch3));
+            } else if (operand->kind == ir::NodeKind::CONST) {
+                // Const: pre-sliced pool address
+                uint64_t const_addr = reinterpret_cast<uint64_t>(const_bit_planes[operand]);
+                a.mov(temp_ptr, const_addr);
+                a.lsl(scratch3, bit_index, 3);
+                a.ldr(out_reg, Mem(temp_ptr, scratch3));
+            } else if (operand->result_kind == ir::ResultKind::BITPLANE && operand->slot_id >= 0) {
+                // Scratchpad: scratch_ptr[slot_id * 512 + bit_index * 8]
+                int slot_offset = operand->slot_id * 512;
+                a.lsl(scratch3, bit_index, 3);
+                a.add(scratch3, scratch3, slot_offset);
+                a.ldr(out_reg, Mem(scratch_ptr, scratch3));
+            }
+        };
+
+        get_operand_at_bit(node->left, plane_a);
+        get_operand_at_bit(node->right, plane_b);
+
+        Gp carry = carry_regs[node->carry_reg];
+
+        if (node->kind == ir::NodeKind::ADD) {
+            // Full Adder: Sum = A ^ B ^ Carry; NextCarry = (A & B) | (Carry & (A ^ B))
+            a.eor(scratch1, plane_a, plane_b);     // scratch1 = A ^ B
+            a.eor(result, scratch1, carry);        // result = (A ^ B) ^ Carry (sum)
+            a.and_(scratch2, plane_a, plane_b);   // scratch2 = A & B
+            a.and_(scratch3, scratch1, carry);    // scratch3 = (A ^ B) & Carry
+            a.orr(carry, scratch2, scratch3);     // carry = (A & B) | ((A ^ B) & Carry)
+
+            int slot_offset = node->slot_id * 512;
+            a.lsl(scratch3, bit_index, 3);
+            a.add(scratch3, scratch3, slot_offset);
+            a.str(result, Mem(x20, scratch3));
+
+        } else {
+            // Full Subtractor: Diff = A ^ ~B ^ Borrow; NextBorrow = (~A & B) | (Borrow & ~(A ^ B))
+            // Note: scratch1=~B, scratch2=A^B (for borrow), scratch3=unused
+            a.mvn(scratch1, plane_b);               // scratch1 = ~B
+
+            // Compute diff = A ^ ~B ^ Borrow
+            a.eor(result, plane_a, scratch1);      // result = A ^ ~B
+            a.eor(result, result, carry);           // result = A ^ ~B ^ Borrow
+
+            // Compute borrow_out = (~A & B) | (Borrow & ~(A ^ B))
+            // Step 1: A ^ B for XNOR computation
+            a.eor(scratch2, plane_a, plane_b);    // scratch2 = A ^ B
+            // Step 2: ~A
+            a.mvn(scratch3, plane_a);              // scratch3 = ~A
+            // Step 3: (~A & B)
+            a.and_(scratch3, scratch3, plane_b);  // scratch3 = ~A & B
+            // Step 4: ~(A ^ B) = complement of XOR
+            a.mvn(scratch2, scratch2);             // scratch2 = ~(A ^ B)
+            // Step 5: (~(A ^ B) & Borrow)
+            a.and_(scratch2, scratch2, carry);    // scratch2 = ~(A ^ B) & Borrow
+            // Step 6: OR the two terms
+            a.orr(carry, scratch3, scratch2);     // carry = (~A & B) | (~(A ^ B) & Borrow)
+
+            int slot_offset = node->slot_id * 512;
+            a.lsl(scratch3, bit_index, 3);
+            a.add(scratch3, scratch3, slot_offset);
+            a.str(result, Mem(x20, scratch3));
+        }
+    }
+
+    a.add(bit_index, bit_index, 1);
+    a.b(loop_start);
+    a.bind(loop_end);
+
+    // =====================================================================
+    // PHASE 2: Comparison & Logic Loop (Bit 63 → 0)
+    // =====================================================================
+
+    std::vector<ir::Node*> comparison_nodes;
+    std::function<void(ir::Node*)> collect_comparisons = [&](ir::Node* node) {
+        if (!node) return;
+        if (node->kind == ir::NodeKind::GT || node->kind == ir::NodeKind::LT || node->kind == ir::NodeKind::EQ) {
+            comparison_nodes.push_back(node);
+            return;
+        }
+        if (node->kind == ir::NodeKind::AND) {
+            collect_comparisons(node->left);
+            collect_comparisons(node->right);
+        }
+    };
+    collect_comparisons(root);
+
+    // Allocate registers for comparison state (avoiding register collisions)
+    // Use registers that are not used anywhere else: x7, x10, x16 (3 comparisons max)
+    // Each comparison uses 2 registers (GT, EQ), so max 6 registers needed for 3 comparisons
+    std::vector<Gp> cmp_gt_regs = {x7, x10, x16};
+    std::vector<Gp> cmp_eq_regs = {x12, x17, x25};  // x12 is used for temp values in init, x17 and x25 are safe
+
+    // Initialize GT and EQ masks for each comparison
+    int num_comparisons = static_cast<int>(comparison_nodes.size());
+    for (int cmp_idx = 0; cmp_idx < num_comparisons && cmp_idx < 3; ++cmp_idx) {
+        a.mov(cmp_gt_regs[cmp_idx], 0);    // GT starts at 0
+        a.mvn(cmp_eq_regs[cmp_idx], xzr); // EQ starts at all 1s
+    }
+
+    // Phase 2 Main Loop: Process each bit from 63 down to 0
+    Label phase2_loop_start = a.new_label();
+    Label phase2_loop_end = a.new_label();
+
+    a.mov(bit_index, 63);
+    a.bind(phase2_loop_start);
+    a.cmp(bit_index, 0);
+    a.b(asmjit::a64::CondCode::kLT, phase2_loop_end);
+
+    auto get_bit = [&](ir::Node* operand, Gp& out_reg) {
+        if (!operand) return;
+        if (operand->kind == ir::NodeKind::LOAD) {
+            int field_offset = operand->field_idx * 8;
+            a.ldr(temp_ptr, Mem(field_planes_ptr, field_offset));
+            a.lsl(scratch3, bit_index, 3);
+            a.ldr(out_reg, Mem(temp_ptr, scratch3));
+        } else if (operand->kind == ir::NodeKind::CONST) {
+            uint64_t const_addr = reinterpret_cast<uint64_t>(const_bit_planes[operand]);
+            a.mov(temp_ptr, const_addr);
+            a.lsl(scratch3, bit_index, 3);
+            a.ldr(out_reg, Mem(temp_ptr, scratch3));
+        } else if (operand->result_kind == ir::ResultKind::BITPLANE && operand->slot_id >= 0) {
+            int slot_offset = operand->slot_id * 512;
+            a.lsl(scratch3, bit_index, 3);
+            a.add(scratch3, scratch3, slot_offset);
+            a.ldr(out_reg, Mem(scratch_ptr, scratch3));
+        }
+    };
+
+    // Process each comparison independently using pre-allocated registers
+    for (int cmp_idx = 0; cmp_idx < num_comparisons && cmp_idx < 3; ++cmp_idx) {
+        ir::Node* cmp_node = comparison_nodes[cmp_idx];
+        Gp cmp_gt = cmp_gt_regs[cmp_idx];
+        Gp cmp_eq = cmp_eq_regs[cmp_idx];
+
+        if (cmp_node->kind == ir::NodeKind::LT) {
+            get_bit(cmp_node->left, plane_a);
+            get_bit(cmp_node->right, plane_b);
+            // LT(A, B) = GT(B, A)
+            CircuitLibrary::emit_gt_64(a, plane_b, plane_a, cmp_gt, cmp_eq);
+        } else if (cmp_node->kind == ir::NodeKind::GT) {
+            get_bit(cmp_node->left, plane_a);
+            get_bit(cmp_node->right, plane_b);
+            CircuitLibrary::emit_gt_64(a, plane_a, plane_b, cmp_gt, cmp_eq);
+        }
+    }
+
+    a.sub(bit_index, bit_index, 1);
+    a.b(phase2_loop_start);
+    a.bind(phase2_loop_end);
+
+    // AND-fold all GT masks to produce final result
+    Gp final_result = x0;
+    if (num_comparisons >= 1) {
+        a.mov(final_result, cmp_gt_regs[0]);
+        for (int i = 1; i < num_comparisons && i < 3; ++i) {
+            a.and_(final_result, final_result, cmp_gt_regs[i]);
+        }
+    } else {
+        // No comparisons: return all ones
+        a.mov(final_result, -1);
+    }
+
+    // ===== Standard ARM64 Epilogue =====
+    a.ldp(x27, x28, Mem(sp).post(16));
+    a.ldp(x25, x26, Mem(sp).post(16));
+    a.ldp(x23, x24, Mem(sp).post(16));
+    a.ldp(x21, x22, Mem(sp).post(16));
+    a.ldp(x19, x20, Mem(sp).post(16));
+    a.ldp(x29, x30, Mem(sp).post(16));
     a.ret(x30);
+
+    dump_bytecode(code, "JIT Expression Kernel Bytecode");
 
     ExprKernelFunc fn = nullptr;
     Error err = runtime_->add(&fn, &code);

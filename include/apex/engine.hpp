@@ -34,6 +34,16 @@ public:
 
     uint64_t execute(const void* data_ptr, size_t row_count) noexcept;
 
+    // Public access for benchmarking and testing
+    void gather_field(const void* data_ptr,
+                     const core::FieldDescriptor* field,
+                     size_t row_stride,
+                     size_t row_count,
+                     compute::ColumnBuffer& out) const noexcept;
+
+    jit::JitCompiler& get_compiler() noexcept { return compiler_; }
+    const core::SchemaRegistry& get_registry() const noexcept { return registry_; }
+
 private:
     struct SchemaMetadata {
         size_t row_stride;
@@ -59,12 +69,6 @@ private:
 
     // Pre-allocated column buffers for multi-field gather (up to 8 fields)
     std::array<compute::ColumnBuffer, 8> field_buffers_;
-
-    void gather_field(const void* data_ptr,
-                     const core::FieldDescriptor* field,
-                     size_t row_stride,
-                     size_t row_count,
-                     compute::ColumnBuffer& out) const noexcept;
 
     uint64_t process_chunk(const uint64_t* gathered_values,
                           const CompiledLogic& logic) noexcept;

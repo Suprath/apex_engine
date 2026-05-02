@@ -64,6 +64,25 @@ endif()
 
 add_test(NAME UniversalLogicTests COMMAND test_universal_logic)
 
+# Infrastructure Audit test
+add_executable(test_infrastructure_audit test_infrastructure_audit.cpp)
+target_include_directories(test_infrastructure_audit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+target_link_libraries(test_infrastructure_audit PRIVATE apex)
+target_compile_options(test_infrastructure_audit PRIVATE ${APEX_COMPILE_FLAGS})
+
+if(asmjit_FOUND)
+    target_compile_definitions(test_infrastructure_audit PRIVATE APEX_HAS_ASMJIT)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
+        target_include_directories(test_infrastructure_audit PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../external/asmjit")
+    endif()
+endif()
+
+if(highway_FOUND)
+    target_compile_definitions(test_infrastructure_audit PRIVATE APEX_HAS_HIGHWAY)
+endif()
+
+add_test(NAME InfrastructureAudit COMMAND test_infrastructure_audit)
+
 # Memory fabric tests (requires iceoryx)
 if(iceoryx_FOUND)
     add_executable(test_memory_fabric test_memory_fabric.cpp)
@@ -78,7 +97,7 @@ if(iceoryx_FOUND)
     endif()
 
     add_test(NAME MemoryFabricTests COMMAND test_memory_fabric)
-    message(STATUS "Tests configured: test_registry, test_memory_fabric")
+    message(STATUS "Tests configured: test_registry, test_infrastructure_audit, test_memory_fabric")
 else()
-    message(STATUS "Tests configured: test_registry (test_memory_fabric requires iceoryx)")
+    message(STATUS "Tests configured: test_registry, test_infrastructure_audit (test_memory_fabric requires iceoryx)")
 endif()

@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cstring>
 #include <functional>
+#include <iostream>
 
 namespace apex {
 
@@ -59,7 +60,9 @@ void ApexEngine::set_expression(std::string_view schema_name, ir::Node* expr_roo
     collect_fields(expr_root);
 
     // Sort fields by their assigned indices
-    std::sort(fields.begin(), fields.end(), [](const core::FieldDescriptor* a, const core::FieldDescriptor* b) {
+    std::sort(fields.begin(), fields.end(),
+        []([[maybe_unused]] const core::FieldDescriptor* a,
+           [[maybe_unused]] const core::FieldDescriptor* b) {
         // We rely on the field assignment order from compile_expression
         return false; // Keep insertion order for now
     });
@@ -105,13 +108,22 @@ uint64_t ApexEngine::process_chunk_expr(
     size_t row_stride,
     size_t row_count,
     const ExprCompiledLogic& expr_logic) noexcept {
-    // Gather all referenced fields
-    std::vector<const uint64_t*> field_planes;
+    std::cout << "[DEBUG] process_chunk_expr: " << expr_logic.fields.size() << " fields\n";
+    std::cout.flush();
+
+    // Gather all referenced fields - use aligned array
+    alignas(64) const uint64_t* field_planes_array[8] = {};
 
     for (size_t i = 0; i < expr_logic.fields.size() && i < 8; ++i) {
+        std::cout << "[DEBUG] Gathering field " << i << "\n";
+        std::cout.flush();
         gather_field(data_ptr, expr_logic.fields[i], row_stride, row_count, field_buffers_[i]);
+        std::cout << "[DEBUG] Slicing field " << i << "\n";
+        std::cout.flush();
         slicer_.slice(field_buffers_[i], field_buffers_[i]);
-        field_planes.push_back(field_buffers_[i].data);
+        field_planes_array[i] = field_buffers_[i].data;
+        std::cout << "[DEBUG] Field " << i << " ready at 0x" << std::hex << (uintptr_t)field_buffers_[i].data << std::dec << "\n";
+        std::cout.flush();
     }
 
     // Thread-local scratchpad (4KB)
@@ -120,8 +132,23 @@ uint64_t ApexEngine::process_chunk_expr(
     };
     static thread_local ScratchpadBuffer scratchpad_buffer;
 
+    // Diagnostic output
+    std::cout << "[DIAG] field_planes_array addr: 0x" << std::hex << (uintptr_t)field_planes_array << std::dec;
+    std::cout << " (aligned: " << ((uintptr_t)field_planes_array % 64 == 0 ? "YES" : "NO") << ")\n";
+    for (size_t i = 0; i < expr_logic.fields.size() && i < 8; ++i) {
+        std::cout << "[DIAG] field_planes[" << i << "]: 0x" << std::hex << (uintptr_t)field_planes_array[i] << std::dec;
+        std::cout << " (aligned: " << ((uintptr_t)field_planes_array[i] % 8 == 0 ? "YES" : "NO") << ")\n";
+    }
+    std::cout << "[DIAG] scratchpad addr: 0x" << std::hex << (uintptr_t)scratchpad_buffer.data << std::dec;
+    std::cout << " (aligned: " << ((uintptr_t)scratchpad_buffer.data % 64 == 0 ? "YES" : "NO") << ")\n";
+    std::cout.flush();
+
+    std::cout << "[DEBUG] Calling kernel with " << expr_logic.fields.size() << " field_planes\n";
+    std::cout.flush();
     // Call the JIT kernel
-    uint64_t result_mask = expr_logic.kernel(field_planes.data(), scratchpad_buffer.data);
+    uint64_t result_mask = expr_logic.kernel(field_planes_array, scratchpad_buffer.data);
+    std::cout << "[DEBUG] Kernel returned: " << result_mask << "\n";
+    std::cout.flush();
 
     return result_mask;
 }

@@ -22,8 +22,13 @@ bool arbitrage_signal_reference(const MarketTick& tick) {
 int main() {
     using namespace apex;
 
+    std::cout << "[DEBUG] Test starting...\n";
+    std::cout.flush();
+
     // Initialize engine
     ApexEngine engine;
+    std::cout << "[DEBUG] Engine initialized\n";
+    std::cout.flush();
 
     // Register schema for MarketTick
     std::vector<core::FieldDescriptor> fields = {
@@ -35,8 +40,12 @@ int main() {
     };
 
     engine.register_schema("market", fields, sizeof(MarketTick));
+    std::cout << "[DEBUG] Schema registered\n";
+    std::cout.flush();
 
     // Build expression: (Ask - Bid) < 5 AND Spread > Prev_Spread AND Volume > 1000
+    std::cout << "[DEBUG] Building expression tree...\n";
+    std::cout.flush();
     auto* expr_root = builder::And(
         builder::And(
             builder::LT(
@@ -57,26 +66,54 @@ int main() {
         )
     );
 
+    std::cout << "[DEBUG] Expression tree built\n";
+    std::cout.flush();
+
+    std::cout << "[DEBUG] Calling set_expression...\n";
+    std::cout.flush();
     engine.set_expression("market", expr_root);
+    std::cout << "[DEBUG] set_expression completed\n";
+    std::cout.flush();
 
     // Generate 64 test rows (one chunk)
+    // Ensure conditions are met: (Ask - Bid) < 5 AND Spread > Prev_Spread AND Volume > 1000
     MarketTick test_rows[64];
     int expected_matches = 0;
 
     for (int i = 0; i < 64; ++i) {
-        test_rows[i].ask = 10000 + i * 10;
-        test_rows[i].bid = 9990 + i * 10;
-        test_rows[i].spread = 100 + i;
-        test_rows[i].prev_spread = 90 + i;
-        test_rows[i].volume = 1500 + i * 100;
+        if (i < 32) {
+            // First 32 rows: all conditions met
+            test_rows[i].ask = 10000 + i * 2;          // Ask values
+            test_rows[i].bid = 9998 + i * 2;           // Bid close to Ask (diff = 2, which is < 5)
+            test_rows[i].spread = 100 + i;             // Spread
+            test_rows[i].prev_spread = 95 + i;         // Prev_spread < spread
+            test_rows[i].volume = 2000 + i * 100;      // Volume > 1000
+        } else {
+            // Last 32 rows: conditions NOT met (volume too low)
+            test_rows[i].ask = 15000 + i * 2;
+            test_rows[i].bid = 14998 + i * 2;
+            test_rows[i].spread = 150 + i;
+            test_rows[i].prev_spread = 145 + i;
+            test_rows[i].volume = 500 + i * 10;        // Volume < 1000, fails condition
+        }
 
         if (arbitrage_signal_reference(test_rows[i])) {
             expected_matches++;
         }
     }
 
+    std::cout << "\n[INFO] Expected matches: " << expected_matches << " (should be 32)\n";
+    std::cout.flush();
+
     // Execute via JIT
+    std::cout << "[DEBUG] Generating test data...\n";
+    std::cout.flush();
+
+    std::cout << "[DEBUG] Calling execute...\n";
+    std::cout.flush();
     uint64_t jit_matches = engine.execute(test_rows, 64);
+    std::cout << "[DEBUG] execute completed\n";
+    std::cout.flush();
 
     std::cout << "\n=== Universal Expression Engine Test (Arbitrage Signal) ===\n";
     std::cout << "Expected matches: " << expected_matches << "\n";

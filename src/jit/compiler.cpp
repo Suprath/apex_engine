@@ -63,6 +63,20 @@ struct ConstPool {
 
 thread_local ConstPool g_const_pool;
 
+// Helper: emit a full 64-bit immediate load on ARM64 using movz/movk sequence.
+// ARM64 MOV can only encode 16-bit immediates; a full 64-bit pointer requires
+// up to 4 instructions. Using a.mov() with a large immediate may silently
+// truncate or fail on the low-level Assembler API.
+static void emit_mov_imm64(asmjit::a64::Assembler& a,
+                           const asmjit::a64::Gp& dst,
+                           uint64_t imm) noexcept {
+    using namespace asmjit;
+    a.movz(dst, Imm(imm & 0xFFFF), Imm(0));
+    a.movk(dst, Imm((imm >> 16) & 0xFFFF), Imm(16));
+    a.movk(dst, Imm((imm >> 32) & 0xFFFF), Imm(32));
+    a.movk(dst, Imm((imm >> 48) & 0xFFFF), Imm(48));
+}
+
 KernelFunc JitCompiler::compile_comparison(uint64_t threshold) noexcept {
     using namespace asmjit;
     using namespace asmjit::a64;
@@ -328,7 +342,7 @@ ExprKernelFunc JitCompiler::compile_expression(
             if (arith_node->kind == ir::NodeKind::ADD) {
                 a.mov(carry_regs[arith_node->carry_reg], 0);
             } else if (arith_node->kind == ir::NodeKind::SUB) {
-                a.mov(carry_regs[arith_node->carry_reg], 0);  // FIXED: Borrow starts at 0, not 1
+                a.mov(carry_regs[arith_node->carry_reg], 1);  // Two's complement: A - B = A + ~B + 1, borrow starts at 1
             }
         }
     }
@@ -363,7 +377,7 @@ ExprKernelFunc JitCompiler::compile_expression(
             } else if (operand->kind == ir::NodeKind::CONST) {
                 // Const: pre-sliced pool address
                 uint64_t const_addr = reinterpret_cast<uint64_t>(const_bit_planes[operand]);
-                a.mov(temp_ptr, const_addr);
+                emit_mov_imm64(a, temp_ptr, const_addr);
                 a.lsl(scratch3, bit_index, 3);
                 a.ldr(out_reg, Mem(temp_ptr, scratch3));
             } else if (operand->result_kind == ir::ResultKind::BITPLANE && operand->slot_id >= 0) {
@@ -394,27 +408,20 @@ ExprKernelFunc JitCompiler::compile_expression(
             a.str(result, Mem(x20, scratch3));
 
         } else {
-            // Full Subtractor: Diff = A ^ ~B ^ Borrow; NextBorrow = (~A & B) | (Borrow & ~(A ^ B))
-            // Note: scratch1=~B, scratch2=A^B (for borrow), scratch3=unused
+            // Two's complement subtraction: A - B = A + ~B + 1
+            // Using full adder with ~B and initial carry=1:
+            //   Sum      = A ^ ~B ^ Carry
+            //   NextCarry = (A & ~B) | (Carry & (A ^ ~B))
             a.mvn(scratch1, plane_b);               // scratch1 = ~B
 
-            // Compute diff = A ^ ~B ^ Borrow
-            a.eor(result, plane_a, scratch1);      // result = A ^ ~B
-            a.eor(result, result, carry);           // result = A ^ ~B ^ Borrow
+            // Compute diff = A ^ ~B ^ Carry
+            a.eor(scratch2, plane_a, scratch1);    // scratch2 = A ^ ~B
+            a.eor(result, scratch2, carry);         // result = A ^ ~B ^ Carry
 
-            // Compute borrow_out = (~A & B) | (Borrow & ~(A ^ B))
-            // Step 1: A ^ B for XNOR computation
-            a.eor(scratch2, plane_a, plane_b);    // scratch2 = A ^ B
-            // Step 2: ~A
-            a.mvn(scratch3, plane_a);              // scratch3 = ~A
-            // Step 3: (~A & B)
-            a.and_(scratch3, scratch3, plane_b);  // scratch3 = ~A & B
-            // Step 4: ~(A ^ B) = complement of XOR
-            a.mvn(scratch2, scratch2);             // scratch2 = ~(A ^ B)
-            // Step 5: (~(A ^ B) & Borrow)
-            a.and_(scratch2, scratch2, carry);    // scratch2 = ~(A ^ B) & Borrow
-            // Step 6: OR the two terms
-            a.orr(carry, scratch3, scratch2);     // carry = (~A & B) | (~(A ^ B) & Borrow)
+            // Compute carry_out = (A & ~B) | (Carry & (A ^ ~B))
+            a.and_(scratch3, plane_a, scratch1);   // scratch3 = A & ~B
+            a.and_(scratch1, carry, scratch2);     // scratch1 = Carry & (A ^ ~B)
+            a.orr(carry, scratch3, scratch1);      // carry = (A & ~B) | (Carry & (A ^ ~B))
 
             int slot_offset = node->slot_id * 512;
             a.lsl(scratch3, bit_index, 3);
@@ -476,7 +483,7 @@ ExprKernelFunc JitCompiler::compile_expression(
             a.ldr(out_reg, Mem(temp_ptr, scratch3));
         } else if (operand->kind == ir::NodeKind::CONST) {
             uint64_t const_addr = reinterpret_cast<uint64_t>(const_bit_planes[operand]);
-            a.mov(temp_ptr, const_addr);
+            emit_mov_imm64(a, temp_ptr, const_addr);
             a.lsl(scratch3, bit_index, 3);
             a.ldr(out_reg, Mem(temp_ptr, scratch3));
         } else if (operand->result_kind == ir::ResultKind::BITPLANE && operand->slot_id >= 0) {

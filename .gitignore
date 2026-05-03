@@ -34,3 +34,4 @@ generated/
 # CMake cache
 CMakeUserPresets.json
 CLAUDE.md
+DEVELOPMENT_GUIDE.md

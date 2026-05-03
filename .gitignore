@@ -33,3 +33,4 @@ generated/
 
 # CMake cache
 CMakeUserPresets.json
+CLAUDE.md

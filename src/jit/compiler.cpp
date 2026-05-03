@@ -70,6 +70,7 @@ struct ConstPool {
 
 thread_local ConstPool g_const_pool;
 
+// ULL-Compliant: JIT code generation helper (compile-time only, not hot path)
 // Helper: emit a full 64-bit immediate load on ARM64 using movz/movk sequence.
 // ARM64 MOV can only encode 16-bit immediates; a full 64-bit pointer requires
 // up to 4 instructions. Using a.mov() with a large immediate may silently
@@ -84,6 +85,8 @@ static void emit_mov_imm64(asmjit::a64::Assembler& a,
     a.movk(dst, (imm >> 48) & 0xFFFF, 48);
 }
 
+// ULL-Compliant: JIT compilation (init-time, generates hot kernel)
+// Target: Kernel latency ~20ns for 64-bit multi-comparison
 KernelFunc JitCompiler::compile_comparison(uint64_t threshold) noexcept {
     using namespace asmjit;
     using namespace asmjit::a64;

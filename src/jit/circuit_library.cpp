@@ -10,6 +10,8 @@
 namespace apex {
 namespace jit {
 
+// ULL-Compliant: Zero heap, branchless bitwise logic, constant time
+// Latency target: ~3ns per bit-slice compare (ARM64 bic/and/orr chain)
 void CircuitLibrary::emit_gt_64(
     asmjit::a64::Assembler& a,
     const asmjit::a64::Gp& a_bit,
@@ -42,6 +44,8 @@ void CircuitLibrary::emit_gt_64(
     a.bic(eq_mask, eq_mask, temp);
 }
 
+// ULL-Compliant: Zero heap, branchless bit-mux, constant time
+// Latency target: ~2ns per mux operation (AND/BIC/ORR chain)
 void CircuitLibrary::emit_mux(
     asmjit::a64::Assembler& a,
     const asmjit::a64::Gp& cond,

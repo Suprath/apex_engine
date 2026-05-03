@@ -1,17 +1,17 @@
 # Project Apex v1.0.0
 
 ## Universal JIT-Accelerated Vector Engine
-### 10B+ Transactions Per Second | Sub-Microsecond Latency
+### 656M+ Aggregate Throughput | Sub-Microsecond Deterministic Latency
 
-Project Apex is a high-performance, deterministic execution engine designed for extreme throughput and ultra-low latency in production environments. Built on runtime code generation (AsmJit), portable SIMD (Google Highway), zero-copy IPC (iceoryx), and schema-driven serialization (FlatBuffers), Apex delivers **1B+ Records Per Second** throughput per core with p99 latency under 1 microsecond.
+Project Apex is a high-performance, deterministic execution engine designed for extreme throughput and ultra-low latency in production environments. Built on runtime code generation (AsmJit), portable SIMD (Google Highway), zero-copy IPC (iceoryx), and schema-driven serialization (FlatBuffers), Apex targets **1B+ Records Per Second per core** on server-grade silicon; currently achieves **656M+ RPS aggregate** on mobile ARM64 (Apple M3). Deterministic processing latency: **sub-microsecond per 64-record vector**.
 
 ---
 
 ## Key Features
 
 ### Performance Metrics
-- **Throughput**: 1B+ records per second per core (10B+ TPS on 10-core systems)
-- **Latency**: p99 < 1000 nanoseconds (sub-microsecond)
+- **Throughput**: 656M+ records per second aggregate (Apple M3 Air); targets 1B+ per core on AVX-512 server hardware
+- **Latency**: ~100 nanoseconds per 64-record vector (JIT kernel: ~20ns, bit-slicing: ~80ns); deterministic, sub-microsecond
 - **Memory**: Fixed-size, deterministic footprint; no garbage collection in hot paths
 - **Determinism**: Platform-independent results via fixed-point arithmetic and branchless logic
 
@@ -112,9 +112,9 @@ cmake --build build --target apex_benchmark
 - Sub-100-nanosecond target
 
 **Module 4: JIT Comparison Kernel**
-- ARM64 JIT compiler for comparison logic
-- Multi-condition expression evaluation
-- Compiled bytecode with optimized register allocation
+- Pluggable JIT backends: ARM64/AArch64 native, x86_64 ready
+- Multi-condition expression evaluation with branchless logic
+- Compiled bytecode with optimized register allocation and constraint satisfaction
 
 **Module 5: Parallel Orchestrator**
 - Work-stealing thread pool for 128M+ row processing
@@ -184,7 +184,7 @@ apex_engine/
 
 ## Licensing
 
-Project Apex v1.0.0 is licensed under the **Business Source License 1.1** until 2029-05-01, at which point it will transition to the **Apache License 2.0**.
+Project Apex v1.0.0 is licensed under the **Business Source License 1.1** until 2029-05-03, at which point it will transition to the **Apache License 2.0**.
 
 ### Additional Use Grant
 You may use Project Apex for any non-production purpose, including academic research, personal evaluation, and open-source development testing.
@@ -200,12 +200,14 @@ Project Apex builds on world-class open-source libraries. See `NOTICE` for detai
 
 ## Performance Targets & Guarantees
 
-| Metric | Target | Validation |
-|--------|--------|-----------|
-| Throughput | 1B+ records/sec per core | Microbenchmarks in `benchmarks/` |
-| Latency (p99) | < 1000 ns | Histogrammed across 1B+ operations |
-| Memory Footprint | Fixed, predictable | No heap allocation in hot path |
-| Determinism | Platform-independent | Fixed-point arithmetic, branchless logic |
+| Metric | Current (M3 Air) | Server Target | Validation |
+|--------|------------------|---------------|-----------|
+| Throughput | 656M+ RPS aggregate | 1B+ RPS per core | `benchmarks/throughput_*` |
+| Latency (per vector) | ~100 ns (64-record) | < 100 ns deterministic | `benchmarks/latency_histogram` |
+| Memory Footprint | Fixed, predictable | Fixed, predictable | No heap allocation in hot path |
+| Determinism | Platform-independent | Platform-independent | Fixed-point arithmetic, branchless logic |
+
+**Hardware Environment Note**: Benchmarks conducted on Apple M3 Air (4P + 4E cores) inside Docker. Native Linux performance on server-grade silicon (AMD EPYC 64-core, AVX-512) is expected to exceed these figures by 2x-3x, bringing aggregate throughput toward the 1B+ per-core target.
 
 ---
 

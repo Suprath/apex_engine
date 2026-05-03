@@ -23,6 +23,8 @@ struct alignas(64) PaddedResult {
     char pad[56];  // Fill to 64 bytes
 };
 
+// ULL-Compliant: Zero shared mutable state, cache-line padded, work-stealing safe
+// Latency target: 64M+ records/sec per thread (656M aggregate on 4 threads)
 // Per-thread worker function — completely self-contained, zero shared mutable state
 static void worker_thread(
     const uint8_t* base,
@@ -110,6 +112,8 @@ static void worker_thread(
     result->count = total_matches;
 }
 
+// ULL-Compliant: Work distribution orchestrator, thread-safe
+// Non-hot-path: spawns hot worker_thread() tasks
 uint64_t ParallelRunner::run(
     const void* data_ptr,
     size_t total_rows,

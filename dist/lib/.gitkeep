@@ -1,0 +1,2 @@
+# Compiled libraries (libapex.so, libapex.dylib, libapex.dll) should be placed here
+# after successful build with: cmake --build build && cp lib/* dist/lib/

@@ -35,3 +35,5 @@ generated/
 CMakeUserPresets.json
 CLAUDE.md
 DEVELOPMENT_GUIDE.md
+SETUP_COMPLETE.md
+ULL_AUDIT_COMPLETE.md
